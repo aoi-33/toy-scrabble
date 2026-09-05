@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
 import { Rack } from './ui/Rack';
 import { ScorePanel } from './ui/ScorePanel';
 import { ActionBar } from './ui/ActionBar';
+import { BlankLetterModal } from './ui/BlankLetterModal';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
+  const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
 
   if (!dict) return <p className="p-6">辞書を読み込み中…</p>;
 
@@ -41,6 +44,9 @@ function GameShell() {
         placement: { coord: { r, c }, tile, rackIndex: selectedIndex },
       });
       setSelectedIndex(null);
+      if (tile.kind === 'blank' && tile.assigned === null) {
+        setPendingBlank({ r, c });
+      }
     }
   }
 
@@ -57,6 +63,9 @@ function GameShell() {
         placement: { coord: { r, c }, tile, rackIndex: index },
       });
       setSelectedIndex(null);
+      if (tile.kind === 'blank' && tile.assigned === null) {
+        setPendingBlank({ r, c });
+      }
     }
   }
 
@@ -104,6 +113,18 @@ function GameShell() {
           </div>
         )}
       </div>
+      {pendingBlank && (
+        <BlankLetterModal
+          onSelect={l => {
+            dispatch({ type: 'ASSIGN_BLANK', r: pendingBlank.r, c: pendingBlank.c, letter: l });
+            setPendingBlank(null);
+          }}
+          onCancel={() => {
+            dispatch({ type: 'RECALL_PENDING', coord: pendingBlank });
+            setPendingBlank(null);
+          }}
+        />
+      )}
     </DndContext>
   );
 }
