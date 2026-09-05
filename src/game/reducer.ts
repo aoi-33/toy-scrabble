@@ -1,6 +1,7 @@
-import type { GameState, GameMode, PendingPlacement } from './types';
+import type { GameState, GameMode, PendingPlacement, MoveRecord } from './types';
 import { createEmptyBoard } from './board';
 import { createBag, drawTiles, seededRng, type Rng } from './bag';
+import { validatePlacement } from './rules';
 import type { Dictionary } from './dictionary';
 
 export function createInitialState(opts: { seed: number; dict: Dictionary }): GameState {
@@ -94,6 +95,53 @@ export function reducer(state: GameState, action: Action): GameState {
       const newPlayers = [...state.players] as GameState['players'];
       newPlayers[state.currentPlayerIndex] = { ...p, rack };
       return { ...state, players: newPlayers };
+    }
+    case 'COMMIT_PLAY': {
+      const p = state.players[state.currentPlayerIndex];
+      const isFirstMove = state.board.flat().every(c => c === null);
+      const result = validatePlacement(state.board, state.pending, action.dict, isFirstMove);
+      if (!result.ok) {
+        return { ...state, lastError: result.reason };
+      }
+
+      const newBoard = state.board.map(row => [...row]);
+      for (const pl of state.pending) {
+        newBoard[pl.coord.r][pl.coord.c] = { tile: pl.tile, placedTurn: state.turn };
+      }
+
+      const drawCount = 7 - p.rack.length;
+      const [drawn, newBag] = drawTiles(state.bag, drawCount);
+      const newRack = [...p.rack, ...drawn];
+
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = {
+        ...p,
+        rack: newRack,
+        score: p.score + result.score,
+      };
+
+      const record: MoveRecord = {
+        player: p.id,
+        move: { kind: 'place', placements: state.pending },
+        wordsFormed: result.formedWords.map(w => w.word),
+        score: result.score,
+      };
+
+      const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
+
+      return {
+        ...state,
+        board: newBoard,
+        bag: newBag,
+        players: newPlayers,
+        pending: [],
+        currentPlayerIndex: nextIndex,
+        turn: state.turn + 1,
+        history: [...state.history, record],
+        lastFormedWords: result.formedWords,
+        consecutivePasses: 0,
+        lastError: null,
+      };
     }
     case 'CLEAR_ERROR':
       return { ...state, lastError: null };

@@ -80,3 +80,55 @@ describe('reducer / SHUFFLE_RACK', () => {
     expect(s1.players[0].rack).toHaveLength(7);
   });
 });
+
+import type { GameState, Letter, Tile } from '../src/game/types';
+import { LETTER_POINTS } from '../src/game/board';
+
+// Utility to force a specific rack for deterministic COMMIT tests
+function withRack(state: GameState, playerIndex: 0 | 1, letters: string[]): GameState {
+  const rack: Tile[] = letters.map(l => ({
+    kind: 'letter',
+    letter: l as Letter,
+    points: LETTER_POINTS[l as Letter],
+  }));
+  const newPlayers = [...state.players] as GameState['players'];
+  newPlayers[playerIndex] = { ...newPlayers[playerIndex], rack };
+  return { ...state, players: newPlayers };
+}
+
+describe('reducer / COMMIT_PLAY', () => {
+  it('places pending tiles on board, awards score, switches turn, redraws to 7', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    s = withRack(s, 0, ['C', 'A', 'T', 'X', 'Y', 'Z', 'Q']);
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 6 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 7 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 8 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+
+    const committed = reducer(s, { type: 'COMMIT_PLAY', dict });
+    expect(committed.pending).toHaveLength(0);
+    expect(committed.board[7][6]?.tile).toMatchObject({ letter: 'C' });
+    expect(committed.board[7][7]?.tile).toMatchObject({ letter: 'A' });
+    expect(committed.board[7][8]?.tile).toMatchObject({ letter: 'T' });
+    expect(committed.players[0].score).toBeGreaterThan(0);
+    expect(committed.players[0].rack).toHaveLength(7);
+    expect(committed.currentPlayerIndex).toBe(1);
+    expect(committed.turn).toBe(2);
+    expect(committed.history).toHaveLength(1);
+    expect(committed.consecutivePasses).toBe(0);
+    expect(committed.lastFormedWords.map(w => w.word)).toContain('CAT');
+  });
+
+  it('sets lastError and does not change board on invalid word', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    s = withRack(s, 0, ['X', 'Y', 'Z', 'A', 'B', 'C', 'D']);
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 6 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 7 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 8 }, tile: s.players[0].rack[0], rackIndex: 0 } });
+
+    const bad = reducer(s, { type: 'COMMIT_PLAY', dict });
+    expect(bad.lastError).toBeTruthy();
+    expect(bad.board.flat().every(c => c === null)).toBe(true);
+    expect(bad.pending).toHaveLength(3);
+    expect(bad.currentPlayerIndex).toBe(0);
+  });
+});
