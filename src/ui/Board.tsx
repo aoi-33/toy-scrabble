@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import type { Board as BoardType, PendingPlacement } from '../game/types';
+import type { Board as BoardType, Coord, PendingPlacement } from '../game/types';
 import { PREMIUM_BOARD } from '../game/board';
 import { Tile } from './Tile';
 
@@ -49,13 +49,17 @@ export function Board({
   board,
   pending,
   onCellClick,
+  highlightCoords = [],
 }: {
   board: BoardType;
   pending: PendingPlacement[];
   onCellClick: (r: number, c: number) => void;
+  /** ハイライト対象のマス座標（例: COM の直近手のタイル）。金色のリングで強調。 */
+  highlightCoords?: Coord[];
 }) {
   const pendingMap = new Map<string, PendingPlacement>();
   for (const p of pending) pendingMap.set(`${p.coord.r},${p.coord.c}`, p);
+  const highlightSet = new Set(highlightCoords.map(co => `${co.r},${co.c}`));
 
   return (
     <div
@@ -69,9 +73,10 @@ export function Board({
           const premiumInfo = premium ? PREMIUM_LABEL[premium] : null;
           const pendingHere = pendingMap.get(`${r},${c}`);
           const isEmpty = !cell && !pendingHere;
-          const cellClassName = isEmpty
-            ? (premiumInfo?.className ?? 'bg-cell-bg')
-            : '';
+          const isHighlighted = highlightSet.has(`${r},${c}`);
+          const cellClassName = `${
+            isEmpty ? premiumInfo?.className ?? 'bg-cell-bg' : ''
+          } ${isHighlighted ? 'ring-4 ring-yellow-300 ring-offset-1 ring-offset-board-bg animate-pulse' : ''}`;
           return (
             <DroppableCell
               key={`${r},${c}`}

@@ -39,7 +39,14 @@ function GameShell() {
       bagRemaining: state.bag.length,
       isFirstMove: state.board.flat().every(c => c === null),
     };
-    ai.requestMove(snap, difficulty).then(move => {
+    // eslint-disable-next-line no-undef
+    console.log(`[AI] request move, difficulty=${difficulty}, rack=${rack.map(t => t.kind === 'letter' ? t.letter : '*').join('')}`);
+    // 「思考中」インジケータを最低 500ms は見せる
+    // eslint-disable-next-line no-undef
+    const minDelay = new Promise(resolve => setTimeout(resolve, 500));
+    Promise.all([ai.requestMove(snap, difficulty), minDelay]).then(([move]) => {
+      // eslint-disable-next-line no-undef
+      console.log('[AI] chose move:', move);
       if (move.kind === 'pass') {
         dispatch({ type: 'PASS' });
       } else if (move.kind === 'exchange') {
@@ -49,11 +56,32 @@ function GameShell() {
       }
     }).catch(err => {
       // eslint-disable-next-line no-undef
-      console.error('AI move failed, passing:', err);
+      console.error('[AI] move failed, passing:', err);
       dispatch({ type: 'PASS' });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.status, state.currentPlayerIndex, state.mode, ai.state]);
+
+  // COM の直近手をトースト表示（3.5 秒で自動消去）
+  const [comToast, setComToast] = useState<string | null>(null);
+  useEffect(() => {
+    const last = state.history[state.history.length - 1];
+    if (!last || last.player !== 'COM') return;
+    let text: string;
+    if (last.move.kind === 'place') {
+      text = `🤖 COM: ${last.wordsFormed.join(' + ')} +${last.score}`;
+    } else if (last.move.kind === 'pass') {
+      text = '🤖 COM: PASS';
+    } else {
+      text = `🤖 COM: EXCHANGE (${last.move.tileIndices.length} 枚)`;
+    }
+    setComToast(text);
+    // eslint-disable-next-line no-undef
+    const t = setTimeout(() => setComToast(null), 3500);
+    // eslint-disable-next-line no-undef
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.history.length]);
 
   if (state.status === 'setup') {
     return (
@@ -158,7 +186,12 @@ function GameShell() {
             🤖 COM 思考中…
           </div>
         )}
-        <Board board={state.board} pending={state.pending} onCellClick={handleCellClick} />
+        <Board
+          board={state.board}
+          pending={state.pending}
+          onCellClick={handleCellClick}
+          highlightCoords={state.lastAiPlacedCoords}
+        />
         <div className={isCOMTurn ? 'pointer-events-none opacity-50' : ''}>
           <Rack
             rack={current.rack}
@@ -166,11 +199,48 @@ function GameShell() {
             onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
           />
         </div>
-        {state.lastFormedWords.length > 0 && (
-          <div className="font-pixel text-xs text-stone-300">
-            直前手: {state.lastFormedWords.map(w => w.word).join(' + ')}
-            （+{state.history[state.history.length - 1]?.score ?? 0}）
-          </div>
+        {(() => {
+          const last = state.history[state.history.length - 1];
+          if (!last) return null;
+          const playerLabel = last.player === 'COM' ? '🤖 COM' : '👤 P1';
+          let content: string;
+          if (last.move.kind === 'place') {
+            content = `${last.wordsFormed.join(' + ')} +${last.score}`;
+          } else if (last.move.kind === 'pass') {
+            content = 'PASS';
+          } else {
+            content = `EXCHANGE (${last.move.tileIndices.length} 枚)`;
+          }
+          return (
+            <div className="font-pixel text-xs text-stone-300">
+              直前手: {playerLabel}: {content}
+            </div>
+          );
+        })()}
+
+        {state.history.length > 0 && (
+          <details className="font-pixel text-[10px] text-stone-400">
+            <summary className="cursor-pointer">履歴 ({state.history.length} 手)</summary>
+            <ol className="mt-2 max-h-32 overflow-y-auto text-left px-2">
+              {state.history.slice(-8).reverse().map((rec, i) => {
+                const num = state.history.length - i;
+                const playerLabel = rec.player === 'COM' ? '🤖' : '👤';
+                let content: string;
+                if (rec.move.kind === 'place') {
+                  content = `${rec.wordsFormed.join(' + ')} +${rec.score}`;
+                } else if (rec.move.kind === 'pass') {
+                  content = 'PASS';
+                } else {
+                  content = `EXCHANGE (${rec.move.tileIndices.length})`;
+                }
+                return (
+                  <li key={num}>
+                    {num}. {playerLabel} {content}
+                  </li>
+                );
+              })}
+            </ol>
+          </details>
         )}
         <div className={isCOMTurn ? 'pointer-events-none opacity-50' : ''}>
           <ActionBar
@@ -196,6 +266,12 @@ function GameShell() {
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {comToast && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-yellow-300 text-stone-900 px-6 py-3 rounded shadow-lg font-pixel text-sm z-40 animate-bounce">
+            {comToast}
           </div>
         )}
       </div>

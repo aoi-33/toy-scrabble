@@ -20,6 +20,7 @@ export function createInitialState(opts: { seed: number; dict: Dictionary }): Ga
     pending: [],
     history: [],
     lastFormedWords: [],
+    lastAiPlacedCoords: [],
     consecutivePasses: 0,
     lastError: null,
   };
@@ -85,6 +86,7 @@ export function reducer(state: GameState, action: Action): GameState {
         pending: [],
         history: [],
         lastFormedWords: [],
+        lastAiPlacedCoords: [],
         consecutivePasses: 0,
         lastError: null,
       };
@@ -171,6 +173,7 @@ export function reducer(state: GameState, action: Action): GameState {
         turn: state.turn + 1,
         history: [...state.history, record],
         lastFormedWords: result.formedWords,
+        lastAiPlacedCoords: [],
         consecutivePasses: 0,
         lastError: null,
       };
@@ -224,6 +227,7 @@ export function reducer(state: GameState, action: Action): GameState {
         turn: state.turn + 1,
         history: [...state.history, record],
         lastFormedWords: result.formedWords,
+        lastAiPlacedCoords: action.placements.map(pl => pl.coord),
         consecutivePasses: 0,
         lastError: null,
       };

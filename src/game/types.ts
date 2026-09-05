@@ -54,6 +54,8 @@ export type GameState = {
   pending: PendingPlacement[];
   history: MoveRecord[];
   lastFormedWords: FormedWord[];
+  /** COM が直近で置いたマス座標（ハイライト用）。P1 のプレイ or 新規ゲームでクリア。 */
+  lastAiPlacedCoords: Coord[];
   consecutivePasses: number;
   lastError: string | null;
 };
