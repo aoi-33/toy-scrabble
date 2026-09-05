@@ -9,9 +9,9 @@ type ModeOption = {
 
 const OPTIONS: ModeOption[] = [
   { mode: 'free', label: 'FREE PLAY', description: '2 人で交互にプレイ', enabled: true },
-  { mode: 'com-easy', label: 'COM EASY', description: 'COM 対戦・初級', enabled: false },
-  { mode: 'com-medium', label: 'COM MEDIUM', description: 'COM 対戦・中級', enabled: false },
-  { mode: 'com-hard', label: 'COM HARD', description: 'COM 対戦・上級', enabled: false },
+  { mode: 'com-easy', label: 'COM EASY', description: 'COM 対戦・初級', enabled: true },
+  { mode: 'com-medium', label: 'COM MEDIUM', description: 'COM 対戦・中級', enabled: true },
+  { mode: 'com-hard', label: 'COM HARD', description: 'COM 対戦・上級', enabled: true },
 ];
 
 export function ModeSelect({
@@ -40,11 +40,6 @@ export function ModeSelect({
           >
             <div className="flex items-center justify-between gap-2">
               <span>{opt.label}</span>
-              {!opt.enabled && (
-                <span className="text-[8px] text-stone-500 font-normal">
-                  Coming in Plan 2
-                </span>
-              )}
             </div>
             <div className="text-[10px] font-normal mt-1 opacity-80">
               {opt.description}

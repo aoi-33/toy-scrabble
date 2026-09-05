@@ -11,12 +11,12 @@ describe('<ModeSelect>', () => {
     expect(screen.getByLabelText('mode-com-hard')).toBeInTheDocument();
   });
 
-  it('COM modes are disabled', () => {
+  it('COM modes are enabled by default', () => {
     render(<ModeSelect disabled={false} onSelect={() => {}} />);
     expect(screen.getByLabelText('mode-free')).not.toBeDisabled();
-    expect(screen.getByLabelText('mode-com-easy')).toBeDisabled();
-    expect(screen.getByLabelText('mode-com-medium')).toBeDisabled();
-    expect(screen.getByLabelText('mode-com-hard')).toBeDisabled();
+    expect(screen.getByLabelText('mode-com-easy')).not.toBeDisabled();
+    expect(screen.getByLabelText('mode-com-medium')).not.toBeDisabled();
+    expect(screen.getByLabelText('mode-com-hard')).not.toBeDisabled();
   });
 
   it('calls onSelect with the selected mode when Free is clicked', () => {
@@ -24,6 +24,13 @@ describe('<ModeSelect>', () => {
     render(<ModeSelect disabled={false} onSelect={onSelect} />);
     fireEvent.click(screen.getByLabelText('mode-free'));
     expect(onSelect).toHaveBeenCalledWith('free');
+  });
+
+  it('calls onSelect with the correct COM mode', () => {
+    const onSelect = vi.fn();
+    render(<ModeSelect disabled={false} onSelect={onSelect} />);
+    fireEvent.click(screen.getByLabelText('mode-com-hard'));
+    expect(onSelect).toHaveBeenCalledWith('com-hard');
   });
 
   it('disables all buttons when disabled prop is true (dict loading)', () => {
