@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Generated dictionary assets (built via `npm run build:dict`, Plan 3)
+public/dict/
