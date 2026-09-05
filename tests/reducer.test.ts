@@ -181,6 +181,26 @@ describe('reducer / PASS', () => {
   });
 });
 
+describe('reducer / COMMIT_AI_PLAY', () => {
+  it('applies AI placements atomically and switches turn', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'com-medium' });
+    s = withRack(s, 1, ['C', 'A', 'T', 'X', 'Y', 'Z', 'Q']);
+    s = { ...s, currentPlayerIndex: 1 };
+    const catTiles = s.players[1].rack.slice(0, 3);
+    const placements = [
+      { coord: { r: 7, c: 6 }, tile: catTiles[0], rackIndex: 0 },
+      { coord: { r: 7, c: 7 }, tile: catTiles[1], rackIndex: 1 },
+      { coord: { r: 7, c: 8 }, tile: catTiles[2], rackIndex: 2 },
+    ];
+    const next = reducer(s, { type: 'COMMIT_AI_PLAY', placements, dict });
+    expect(next.board[7][6]?.tile).toMatchObject({ letter: 'C' });
+    expect(next.players[1].score).toBeGreaterThan(0);
+    expect(next.players[1].rack).toHaveLength(7);
+    expect(next.currentPlayerIndex).toBe(0);
+    expect(next.history).toHaveLength(1);
+  });
+});
+
 describe('reducer / ASSIGN_BLANK', () => {
   it('assigns a letter to a pending blank tile', () => {
     let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });

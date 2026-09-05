@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
@@ -10,12 +10,50 @@ import { ExchangeModal } from './ui/ExchangeModal';
 import { ModeSelect } from './ui/ModeSelect';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
+import { useAiWorker } from './ai/useAiWorker';
+import { boardToSnapshot, rackToSnapshot } from './ai/snapshot';
+import type { Difficulty } from './ai/types';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
+  const dictUrl = dict ? `${import.meta.env.BASE_URL}dict/twl06.txt` : null;
+  const ai = useAiWorker(dictUrl);
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
+
+  useEffect(() => {
+    if (state.status !== 'playing') return;
+    if (state.mode === 'free') return;
+    const currentId = state.players[state.currentPlayerIndex].id;
+    if (currentId !== 'COM') return;
+    if (ai.state !== 'ready') return;
+    if (!dict) return;
+    const difficulty: Difficulty =
+      state.mode === 'com-easy' ? 'easy' :
+      state.mode === 'com-medium' ? 'medium' : 'hard';
+    const rack = state.players[state.currentPlayerIndex].rack;
+    const snap = {
+      board: boardToSnapshot(state.board),
+      rack: rackToSnapshot(rack),
+      bagRemaining: state.bag.length,
+      isFirstMove: state.board.flat().every(c => c === null),
+    };
+    ai.requestMove(snap, difficulty).then(move => {
+      if (move.kind === 'pass') {
+        dispatch({ type: 'PASS' });
+      } else if (move.kind === 'exchange') {
+        dispatch({ type: 'EXCHANGE', indices: move.tileIndices, rng: seededRng(Date.now()) });
+      } else {
+        dispatch({ type: 'COMMIT_AI_PLAY', placements: move.placements, dict });
+      }
+    }).catch(err => {
+      // eslint-disable-next-line no-undef
+      console.error('AI move failed, passing:', err);
+      dispatch({ type: 'PASS' });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status, state.currentPlayerIndex, state.mode, ai.state]);
 
   if (state.status === 'setup') {
     return (

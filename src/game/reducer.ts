@@ -31,6 +31,7 @@ export type Action =
   | { type: 'RECALL_PENDING'; coord: { r: number; c: number } }
   | { type: 'RECALL_ALL' }
   | { type: 'COMMIT_PLAY'; dict: Dictionary }
+  | { type: 'COMMIT_AI_PLAY'; placements: PendingPlacement[]; dict: Dictionary }
   | { type: 'EXCHANGE'; indices: number[]; rng: Rng }
   | { type: 'PASS' }
   | { type: 'SHUFFLE_RACK'; rng: Rng }
@@ -160,6 +161,59 @@ export function reducer(state: GameState, action: Action): GameState {
 
       const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
 
+      return {
+        ...state,
+        board: newBoard,
+        bag: newBag,
+        players: newPlayers,
+        pending: [],
+        currentPlayerIndex: nextIndex,
+        turn: state.turn + 1,
+        history: [...state.history, record],
+        lastFormedWords: result.formedWords,
+        consecutivePasses: 0,
+        lastError: null,
+      };
+    }
+    case 'COMMIT_AI_PLAY': {
+      const p = state.players[state.currentPlayerIndex];
+      const isFirstMove = state.board.flat().every(c => c === null);
+      const result = validatePlacement(state.board, action.placements, action.dict, isFirstMove);
+      if (!result.ok) {
+        return { ...state, lastError: `COM 手が違反: ${result.reason}` };
+      }
+      const newBoard = state.board.map(row => [...row]);
+      for (const pl of action.placements) {
+        newBoard[pl.coord.r][pl.coord.c] = { tile: pl.tile, placedTurn: state.turn };
+      }
+      let newRack = [...p.rack];
+      for (const pl of action.placements) {
+        let idx = newRack.indexOf(pl.tile);
+        if (idx === -1) {
+          idx = newRack.findIndex(t =>
+            t.kind === pl.tile.kind &&
+            (t.kind === 'letter' && pl.tile.kind === 'letter' ? t.letter === pl.tile.letter : true),
+          );
+        }
+        if (idx !== -1) newRack.splice(idx, 1);
+      }
+      const drawCount = 7 - newRack.length;
+      const [drawn, newBag] = drawTiles(state.bag, drawCount);
+      newRack = [...newRack, ...drawn];
+
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = {
+        ...p,
+        rack: newRack,
+        score: p.score + result.score,
+      };
+      const record: MoveRecord = {
+        player: p.id,
+        move: { kind: 'place', placements: action.placements },
+        wordsFormed: result.formedWords.map(w => w.word),
+        score: result.score,
+      };
+      const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
       return {
         ...state,
         board: newBoard,
