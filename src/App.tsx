@@ -32,6 +32,28 @@ function GameShell() {
     );
   }
 
+  if (state.status === 'ended') {
+    const [p1, com] = state.players;
+    const winner = p1.score > com.score ? 'P1' : com.score > p1.score ? 'COM' : 'DRAW';
+    return (
+      <div className="p-6 text-center flex flex-col items-center gap-4">
+        <h1 className="font-pixel text-2xl">GAME OVER</h1>
+        <div className="font-pixel">
+          {winner === 'DRAW' ? 'DRAW' : `${winner} WINS!`}
+        </div>
+        <div className="font-pixel">
+          P1: {p1.score}{'　'}COM: {com.score}
+        </div>
+        <button
+          onClick={() => dispatch({ type: 'START_GAME', mode: state.mode })}
+          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2"
+        >
+          NEW GAME
+        </button>
+      </div>
+    );
+  }
+
   const current = state.players[state.currentPlayerIndex];
 
   function handleCellClick(r: number, c: number) {
