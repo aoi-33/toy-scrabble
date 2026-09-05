@@ -102,8 +102,10 @@ function GameShell() {
   if (!dict) return null;
 
   const current = state.players[state.currentPlayerIndex];
+  const isCOMTurn = state.mode !== 'free' && current.id === 'COM';
 
   function handleCellClick(r: number, c: number) {
+    if (isCOMTurn) return;
     if (state.pending.some(p => p.coord.r === r && p.coord.c === c)) {
       dispatch({ type: 'RECALL_PENDING', coord: { r, c } });
       return;
@@ -122,6 +124,7 @@ function GameShell() {
   }
 
   function handleDragEnd(evt: DragEndEvent) {
+    if (isCOMTurn) return;
     const source = evt.active.data.current;
     const target = evt.over?.data.current;
     if (source?.source === 'rack' && target && typeof target.r === 'number') {
@@ -150,30 +153,39 @@ function GameShell() {
           bagRemaining={state.bag.length}
           currentPlayerId={current.id}
         />
+        {ai.state === 'thinking' && (
+          <div className="font-pixel text-xs text-yellow-300 animate-pulse">
+            🤖 COM 思考中…
+          </div>
+        )}
         <Board board={state.board} pending={state.pending} onCellClick={handleCellClick} />
-        <Rack
-          rack={current.rack}
-          selectedIndex={selectedIndex}
-          onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
-        />
+        <div className={isCOMTurn ? 'pointer-events-none opacity-50' : ''}>
+          <Rack
+            rack={current.rack}
+            selectedIndex={selectedIndex}
+            onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
+          />
+        </div>
         {state.lastFormedWords.length > 0 && (
           <div className="font-pixel text-xs text-stone-300">
             直前手: {state.lastFormedWords.map(w => w.word).join(' + ')}
             （+{state.history[state.history.length - 1]?.score ?? 0}）
           </div>
         )}
-        <ActionBar
-          canPlay={state.pending.length > 0}
-          canRecall={state.pending.length > 0}
-          onPlay={() => dispatch({ type: 'COMMIT_PLAY', dict })}
-          onRecall={() => dispatch({ type: 'RECALL_ALL' })}
-          onShuffle={() => dispatch({ type: 'SHUFFLE_RACK', rng: seededRng(Date.now()) })}
-          onPass={() => {
-            // eslint-disable-next-line no-undef
-            if (confirm('本当に PASS しますか？')) dispatch({ type: 'PASS' });
-          }}
-          onExchange={() => setShowExchange(true)}
-        />
+        <div className={isCOMTurn ? 'pointer-events-none opacity-50' : ''}>
+          <ActionBar
+            canPlay={state.pending.length > 0}
+            canRecall={state.pending.length > 0}
+            onPlay={() => dispatch({ type: 'COMMIT_PLAY', dict })}
+            onRecall={() => dispatch({ type: 'RECALL_ALL' })}
+            onShuffle={() => dispatch({ type: 'SHUFFLE_RACK', rng: seededRng(Date.now()) })}
+            onPass={() => {
+              // eslint-disable-next-line no-undef
+              if (confirm('本当に PASS しますか？')) dispatch({ type: 'PASS' });
+            }}
+            onExchange={() => setShowExchange(true)}
+          />
+        </div>
 
         {state.lastError && (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded font-pixel text-xs">
