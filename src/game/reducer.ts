@@ -1,6 +1,6 @@
 import type { GameState, GameMode, PendingPlacement } from './types';
 import { createEmptyBoard } from './board';
-import { createBag, drawTiles, seededRng } from './bag';
+import { createBag, drawTiles, seededRng, type Rng } from './bag';
 import type { Dictionary } from './dictionary';
 
 export function createInitialState(opts: { seed: number; dict: Dictionary }): GameState {
@@ -30,6 +30,7 @@ export type Action =
   | { type: 'RECALL_PENDING'; coord: { r: number; c: number } }
   | { type: 'RECALL_ALL' }
   | { type: 'COMMIT_PLAY'; dict: Dictionary }
+  | { type: 'SHUFFLE_RACK'; rng: Rng }
   | { type: 'CLEAR_ERROR' };
 
 export function reducer(state: GameState, action: Action): GameState {
@@ -55,6 +56,47 @@ export function reducer(state: GameState, action: Action): GameState {
         lastError: null,
       };
     }
+    case 'PLACE_PENDING': {
+      const p = state.players[state.currentPlayerIndex];
+      const newRack = [...p.rack];
+      newRack.splice(action.placement.rackIndex, 1);
+      const newPending = [...state.pending, action.placement];
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
+      return { ...state, players: newPlayers, pending: newPending, lastError: null };
+    }
+    case 'RECALL_PENDING': {
+      const { r, c } = action.coord;
+      const removed = state.pending.find(p => p.coord.r === r && p.coord.c === c);
+      if (!removed) return state;
+      const p = state.players[state.currentPlayerIndex];
+      const newRack = [...p.rack, removed.tile];
+      const newPending = state.pending.filter(p2 => !(p2.coord.r === r && p2.coord.c === c));
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
+      return { ...state, players: newPlayers, pending: newPending };
+    }
+    case 'RECALL_ALL': {
+      if (state.pending.length === 0) return state;
+      const p = state.players[state.currentPlayerIndex];
+      const newRack = [...p.rack, ...state.pending.map(x => x.tile)];
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
+      return { ...state, players: newPlayers, pending: [] };
+    }
+    case 'SHUFFLE_RACK': {
+      const p = state.players[state.currentPlayerIndex];
+      const rack = [...p.rack];
+      for (let i = rack.length - 1; i > 0; i--) {
+        const j = Math.floor(action.rng() * (i + 1));
+        [rack[i], rack[j]] = [rack[j], rack[i]];
+      }
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = { ...p, rack };
+      return { ...state, players: newPlayers };
+    }
+    case 'CLEAR_ERROR':
+      return { ...state, lastError: null };
     default:
       return state;
   }
