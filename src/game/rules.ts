@@ -1,4 +1,5 @@
-import type { Board, Coord, Direction, PendingPlacement, FormedWord } from './types';
+import type { Board, Coord, Direction, PendingPlacement, Tile, FormedWord } from './types';
+import { PREMIUM_BOARD } from './board';
 import type { Dictionary } from './dictionary';
 import { isValidWord } from './dictionary';
 
@@ -85,14 +86,98 @@ export function validatePlacement(
   return { ok: true, formedWords, score };
 }
 
-// Placeholder — implemented in Task 3.3
+function tileLetter(tile: Tile): string {
+  return tile.kind === 'letter' ? tile.letter : (tile.assigned ?? '?');
+}
+
+function tileScore(tile: Tile): number {
+  return tile.kind === 'letter' ? tile.points : 0;
+}
+
+function scanWord(
+  board: Board,
+  pendingMap: Map<string, PendingPlacement>,
+  start: Coord,
+  direction: Direction,
+): { tiles: { coord: Coord; tile: Tile; fromPending: boolean }[]; startCoord: Coord } {
+  const step = direction === 'H' ? { r: 0, c: -1 } : { r: -1, c: 0 };
+  let cur: Coord = { ...start };
+  while (true) {
+    const prev: Coord = { r: cur.r + step.r, c: cur.c + step.c };
+    if (prev.r < 0 || prev.r > 14 || prev.c < 0 || prev.c > 14) break;
+    const key = `${prev.r},${prev.c}`;
+    const existing = board[prev.r][prev.c];
+    const pending = pendingMap.get(key);
+    if (existing === null && !pending) break;
+    cur = prev;
+  }
+  const startCoord = { ...cur };
+
+  const forward = direction === 'H' ? { r: 0, c: 1 } : { r: 1, c: 0 };
+  const tiles: { coord: Coord; tile: Tile; fromPending: boolean }[] = [];
+  while (cur.r >= 0 && cur.r <= 14 && cur.c >= 0 && cur.c <= 14) {
+    const key = `${cur.r},${cur.c}`;
+    const pending = pendingMap.get(key);
+    const existing = board[cur.r][cur.c];
+    if (pending) {
+      tiles.push({ coord: { ...cur }, tile: pending.tile, fromPending: true });
+    } else if (existing) {
+      tiles.push({ coord: { ...cur }, tile: existing.tile, fromPending: false });
+    } else {
+      break;
+    }
+    cur = { r: cur.r + forward.r, c: cur.c + forward.c };
+  }
+  return { tiles, startCoord };
+}
+
+function scoreWordTiles(tiles: { coord: Coord; tile: Tile; fromPending: boolean }[]): {
+  wordMultiplier: number;
+  finalScore: number;
+} {
+  let sum = 0;
+  let wordMultiplier = 1;
+  for (const { coord, tile, fromPending } of tiles) {
+    let letterScore = tileScore(tile);
+    if (fromPending) {
+      const premium = PREMIUM_BOARD[coord.r][coord.c];
+      if (premium === 'DL') letterScore *= 2;
+      else if (premium === 'TL') letterScore *= 3;
+      else if (premium === 'DW' || premium === 'STAR') wordMultiplier *= 2;
+      else if (premium === 'TW') wordMultiplier *= 3;
+    }
+    sum += letterScore;
+  }
+  return { wordMultiplier, finalScore: sum * wordMultiplier };
+}
+
 export function extractAllFormedWords(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _board: Board,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _placements: PendingPlacement[],
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _direction: Direction,
+  board: Board,
+  placements: PendingPlacement[],
+  direction: Direction,
 ): FormedWord[] {
-  return [];
+  if (placements.length === 0) return [];
+  const pendingMap = new Map<string, PendingPlacement>();
+  for (const p of placements) pendingMap.set(`${p.coord.r},${p.coord.c}`, p);
+
+  const words: FormedWord[] = [];
+
+  const main = scanWord(board, pendingMap, placements[0].coord, direction);
+  if (main.tiles.length >= 2) {
+    const word = main.tiles.map(t => tileLetter(t.tile)).join('');
+    const { wordMultiplier, finalScore } = scoreWordTiles(main.tiles);
+    words.push({ word, tiles: main.tiles, wordMultiplier, finalScore });
+  }
+
+  const perpendicular: Direction = direction === 'H' ? 'V' : 'H';
+  for (const p of placements) {
+    const cross = scanWord(board, pendingMap, p.coord, perpendicular);
+    if (cross.tiles.length >= 2) {
+      const word = cross.tiles.map(t => tileLetter(t.tile)).join('');
+      const { wordMultiplier, finalScore } = scoreWordTiles(cross.tiles);
+      words.push({ word, tiles: cross.tiles, wordMultiplier, finalScore });
+    }
+  }
+
+  return words;
 }

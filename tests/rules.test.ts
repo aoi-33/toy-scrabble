@@ -84,3 +84,47 @@ describe('validatePlacement — geometry', () => {
     expect(res.ok).toBe(false);
   });
 });
+
+import { extractAllFormedWords } from '../src/game/rules';
+
+describe('extractAllFormedWords', () => {
+  it('extracts single main horizontal word', () => {
+    const ps = [P(7, 6, 'C'), P(7, 7, 'A'), P(7, 8, 'T')];
+    const words = extractAllFormedWords(createEmptyBoard(), ps, 'H');
+    expect(words.map(w => w.word)).toEqual(['CAT']);
+  });
+
+  it('extracts main + cross word when placement extends existing tile', () => {
+    let b = createEmptyBoard();
+    b = place(b, 7, 7, 'A');
+    const ps = [P(8, 7, 'T')];
+    const words = extractAllFormedWords(b, ps, 'V');
+    expect(words.map(w => w.word).sort()).toEqual(['AT']);
+  });
+
+  it('extracts main word with existing tile inside', () => {
+    let b = createEmptyBoard();
+    b = place(b, 7, 7, 'A');
+    const ps = [P(7, 6, 'C'), P(7, 8, 'T')];
+    const words = extractAllFormedWords(b, ps, 'H');
+    expect(words.map(w => w.word)).toEqual(['CAT']);
+  });
+
+  it('extracts perpendicular cross words for each placement that creates one', () => {
+    let b = createEmptyBoard();
+    b = place(b, 7, 6, 'C');
+    b = place(b, 7, 7, 'A');
+    b = place(b, 7, 8, 'T');
+    const ps = [P(6, 7, 'B'), P(8, 7, 'T')];
+    const words = extractAllFormedWords(b, ps, 'V');
+    expect(words.map(w => w.word).sort()).toEqual(['BAT']);
+  });
+
+  it('ignores 1-letter cross fragments', () => {
+    let b = createEmptyBoard();
+    b = place(b, 7, 7, 'A');
+    const ps = [P(7, 8, 'T')];
+    const words = extractAllFormedWords(b, ps, 'H');
+    expect(words.map(w => w.word)).toEqual(['AT']);
+  });
+});
