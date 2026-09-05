@@ -132,3 +132,62 @@ describe('reducer / COMMIT_PLAY', () => {
     expect(bad.currentPlayerIndex).toBe(0);
   });
 });
+
+describe('reducer / EXCHANGE', () => {
+  it('swaps selected rack tiles with new draws when bag has >= 7 tiles', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    const originalRack = [...s.players[0].rack];
+    const beforeBag = s.bag.length;
+    s = reducer(s, { type: 'EXCHANGE', indices: [0, 1, 2], rng: seededRng(7) });
+    expect(s.players[0].rack).toHaveLength(7);
+    expect(s.bag.length).toBe(beforeBag);
+    expect(s.players[0].rack.slice(0, 4)).toEqual(originalRack.slice(3));
+    expect(s.currentPlayerIndex).toBe(1);
+    expect(s.consecutivePasses).toBe(0);
+  });
+
+  it('rejects EXCHANGE when bag has < 7 tiles remaining', () => {
+    let s = createInitialState({ seed: 1, dict });
+    s = reducer(s, { type: 'START_GAME', mode: 'free' });
+    s = { ...s, bag: s.bag.slice(0, 6) };
+    const next = reducer(s, { type: 'EXCHANGE', indices: [0], rng: seededRng(1) });
+    expect(next.lastError).toBeTruthy();
+    expect(next.players[0].rack).toHaveLength(7);
+    expect(next.currentPlayerIndex).toBe(0);
+  });
+});
+
+describe('reducer / PASS', () => {
+  it('increments consecutivePasses and switches turn', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    s = reducer(s, { type: 'PASS' });
+    expect(s.consecutivePasses).toBe(1);
+    expect(s.currentPlayerIndex).toBe(1);
+    s = reducer(s, { type: 'PASS' });
+    expect(s.consecutivePasses).toBe(2);
+  });
+
+  it('ends game after 6 consecutive passes', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    for (let i = 0; i < 6; i++) s = reducer(s, { type: 'PASS' });
+    expect(s.status).toBe('ended');
+  });
+
+  it('ends game when a player empties rack and bag is empty', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    s = { ...s, bag: [], players: [{ ...s.players[0], rack: [] }, s.players[1]] };
+    s = reducer(s, { type: 'PASS' });
+    expect(s.status).toBe('ended');
+  });
+});
+
+describe('reducer / ASSIGN_BLANK', () => {
+  it('assigns a letter to a pending blank tile', () => {
+    let s = reducer(createInitialState({ seed: 1, dict }), { type: 'START_GAME', mode: 'free' });
+    const blank: Tile = { kind: 'blank', assigned: null, points: 0 };
+    s = { ...s, players: [{ ...s.players[0], rack: [blank] }, s.players[1]] };
+    s = reducer(s, { type: 'PLACE_PENDING', placement: { coord: { r: 7, c: 7 }, tile: blank, rackIndex: 0 } });
+    s = reducer(s, { type: 'ASSIGN_BLANK', r: 7, c: 7, letter: 'A' });
+    expect(s.pending[0].tile).toMatchObject({ kind: 'blank', assigned: 'A' });
+  });
+});

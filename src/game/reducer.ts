@@ -1,4 +1,4 @@
-import type { GameState, GameMode, PendingPlacement, MoveRecord } from './types';
+import type { GameState, GameMode, PendingPlacement, MoveRecord, Tile, Letter } from './types';
 import { createEmptyBoard } from './board';
 import { createBag, drawTiles, seededRng, type Rng } from './bag';
 import { validatePlacement } from './rules';
@@ -31,8 +31,39 @@ export type Action =
   | { type: 'RECALL_PENDING'; coord: { r: number; c: number } }
   | { type: 'RECALL_ALL' }
   | { type: 'COMMIT_PLAY'; dict: Dictionary }
+  | { type: 'EXCHANGE'; indices: number[]; rng: Rng }
+  | { type: 'PASS' }
   | { type: 'SHUFFLE_RACK'; rng: Rng }
+  | { type: 'ASSIGN_BLANK'; r: number; c: number; letter: Letter }
   | { type: 'CLEAR_ERROR' };
+
+function nextPlayerAndCheckEnd(
+  state: GameState,
+  nextIndex: 0 | 1,
+  consecutivePasses: number,
+): Partial<GameState> {
+  const anyEmptyRack = state.players.some(p => p.rack.length === 0);
+  const bagEmpty = state.bag.length === 0;
+  const endedByPasses = consecutivePasses >= 6;
+  const endedByEmpty = anyEmptyRack && bagEmpty;
+  if (endedByPasses || endedByEmpty) {
+    const adjusted = state.players.map(p => {
+      const remainingPoints = p.rack.reduce((sum, t) => sum + (t.kind === 'letter' ? t.points : 0), 0);
+      return { ...p, score: p.score - remainingPoints };
+    }) as GameState['players'];
+    if (endedByEmpty) {
+      const emptyIdx = state.players.findIndex(p => p.rack.length === 0);
+      const otherIdx = emptyIdx === 0 ? 1 : 0;
+      const otherRemaining = state.players[otherIdx].rack.reduce(
+        (s, t) => s + (t.kind === 'letter' ? t.points : 0),
+        0,
+      );
+      adjusted[emptyIdx] = { ...adjusted[emptyIdx], score: adjusted[emptyIdx].score + otherRemaining };
+    }
+    return { status: 'ended', players: adjusted, currentPlayerIndex: nextIndex, consecutivePasses };
+  }
+  return { currentPlayerIndex: nextIndex, consecutivePasses };
+}
 
 export function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -142,6 +173,68 @@ export function reducer(state: GameState, action: Action): GameState {
         consecutivePasses: 0,
         lastError: null,
       };
+    }
+    case 'EXCHANGE': {
+      if (state.bag.length < 7) {
+        return { ...state, lastError: '袋の残りが 7 枚未満のため交換できません' };
+      }
+      const p = state.players[state.currentPlayerIndex];
+      const keep = p.rack.filter((_, i) => !action.indices.includes(i));
+      const removed = p.rack.filter((_, i) => action.indices.includes(i));
+      const newBag = [...state.bag, ...removed];
+      for (let i = newBag.length - 1; i > 0; i--) {
+        const j = Math.floor(action.rng() * (i + 1));
+        [newBag[i], newBag[j]] = [newBag[j], newBag[i]];
+      }
+      const [drawn, afterDraw] = drawTiles(newBag, action.indices.length);
+      const newRack = [...keep, ...drawn];
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
+
+      const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
+      const endInfo = nextPlayerAndCheckEnd(
+        { ...state, players: newPlayers, bag: afterDraw },
+        nextIndex,
+        0,
+      );
+      return {
+        ...state,
+        players: newPlayers,
+        bag: afterDraw,
+        pending: [],
+        turn: state.turn + 1,
+        history: [
+          ...state.history,
+          { player: p.id, move: { kind: 'exchange', tileIndices: action.indices }, wordsFormed: [], score: 0 },
+        ],
+        lastError: null,
+        ...endInfo,
+      };
+    }
+    case 'PASS': {
+      const p = state.players[state.currentPlayerIndex];
+      const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
+      const newConsecutive = state.consecutivePasses + 1;
+      const endInfo = nextPlayerAndCheckEnd(state, nextIndex, newConsecutive);
+      return {
+        ...state,
+        turn: state.turn + 1,
+        history: [
+          ...state.history,
+          { player: p.id, move: { kind: 'pass' }, wordsFormed: [], score: 0 },
+        ],
+        lastError: null,
+        ...endInfo,
+      };
+    }
+    case 'ASSIGN_BLANK': {
+      const { r, c, letter } = action;
+      const newPending = state.pending.map(pl =>
+        pl.coord.r === r && pl.coord.c === c && pl.tile.kind === 'blank'
+          ? { ...pl, tile: { ...pl.tile, assigned: letter } as Tile }
+          : pl,
+      );
+      return { ...state, pending: newPending };
     }
     case 'CLEAR_ERROR':
       return { ...state, lastError: null };
