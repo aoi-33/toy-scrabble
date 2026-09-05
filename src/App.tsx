@@ -7,6 +7,7 @@ import { ScorePanel } from './ui/ScorePanel';
 import { ActionBar } from './ui/ActionBar';
 import { BlankLetterModal } from './ui/BlankLetterModal';
 import { ExchangeModal } from './ui/ExchangeModal';
+import { ModeSelect } from './ui/ModeSelect';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
 
@@ -18,18 +19,18 @@ function GameShell() {
 
   if (state.status === 'setup') {
     return (
-      <div className="p-6 text-center flex flex-col items-center gap-3">
-        <h1 className="font-pixel text-2xl mb-4">Toy Scrabble</h1>
-        <button
-          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+      <div className="p-6 text-center flex flex-col items-center gap-4">
+        <h1 className="font-pixel text-2xl mb-2">Toy Scrabble</h1>
+        <p className="font-pixel text-[10px] text-stone-400 mb-2">
+          モードを選択してください
+        </p>
+        <ModeSelect
           disabled={!dict}
-          onClick={() => dispatch({ type: 'START_GAME', mode: 'free' })}
-        >
-          {dict ? 'NEW GAME' : '読み込み中…'}
-        </button>
+          onSelect={mode => dispatch({ type: 'START_GAME', mode })}
+        />
         {!dict && (
           <p className="font-pixel text-[10px] text-stone-400">
-            辞書を読み込んでいます (約 2.7MB)
+            辞書を読み込んでいます (約 2.7MB)…
           </p>
         )}
       </div>
