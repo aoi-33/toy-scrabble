@@ -6,6 +6,9 @@ dist/
 .env
 .env.local
 
-# Generated dictionary assets (built via `npm run build:dict`, Plan 3)
+# Claude Code harness state (per-user)
+.claude/
+
+# Generated dictionary assets (built via `npm run build:dict`)
 public/dict/*
 !public/dict/twl06.sample.txt
