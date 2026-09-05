@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findAnchors, generateMovesAt } from '../../src/ai/search';
+import { findAnchors, generateMovesAt, searchAllMoves } from '../../src/ai/search';
 import { createDictionaryFromText } from '../../src/game/dictionary';
 import type { AISnapshot } from '../../src/ai/types';
 
@@ -64,5 +64,35 @@ describe('generateMovesAt (H direction)', () => {
     const moves = generateMovesAt({ r: 7, c: 6 }, 'H', snap, dict);
     const words = moves.map(m => m.word);
     expect(words).toContain('CAT');
+  });
+});
+
+describe('searchAllMoves', () => {
+  it('returns at least one CAT-like word on empty first move', () => {
+    const snap: AISnapshot = {
+      board: empty(),
+      rack: ['C', 'A', 'T', 'X', 'Y', 'Z', 'Q'],
+      bagRemaining: 86,
+      isFirstMove: true,
+    };
+    const moves = searchAllMoves(snap, dict, { deadlineMs: 1000 });
+    expect(moves.length).toBeGreaterThan(0);
+    expect(moves.some(m => m.word === 'CAT')).toBe(true);
+  });
+
+  it('respects the deadline and returns partial results', () => {
+    const snap: AISnapshot = {
+      board: empty(),
+      rack: ['C', 'A', 'T', 'S', 'B', 'E'],
+      bagRemaining: 86,
+      isFirstMove: true,
+    };
+    // eslint-disable-next-line no-undef
+    const start = performance.now();
+    const moves = searchAllMoves(snap, dict, { deadlineMs: 1 });
+    // eslint-disable-next-line no-undef
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(200);
+    expect(Array.isArray(moves)).toBe(true);
   });
 });

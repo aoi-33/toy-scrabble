@@ -245,3 +245,38 @@ export function generateMovesAt(
   extendForward(snap, dict, dir, anchor, startR, startC, prefix, snap.rack, [], results);
   return results;
 }
+
+export function searchAllMoves(
+  snap: AISnapshot,
+  dict: Dictionary,
+  opts: { deadlineMs: number },
+): GeneratedMove[] {
+  const results: GeneratedMove[] = [];
+  // eslint-disable-next-line no-undef
+  const deadline = performance.now() + opts.deadlineMs;
+  const anchors = findAnchors(snap);
+  const orderedAnchors = anchors
+    .map(a => ({ a, d: Math.abs(a.r - 7) + Math.abs(a.c - 7) }))
+    .sort((x, y) => x.d - y.d)
+    .map(x => x.a);
+
+  outer: for (const anchor of orderedAnchors) {
+    for (const dir of ['H', 'V'] as const) {
+      // eslint-disable-next-line no-undef
+      if (performance.now() > deadline) break outer;
+      const moves = generateMovesAt(anchor, dir, snap, dict);
+      results.push(...moves);
+    }
+  }
+  return dedupeMoves(results);
+}
+
+function dedupeMoves(moves: GeneratedMove[]): GeneratedMove[] {
+  const seen = new Map<string, GeneratedMove>();
+  for (const m of moves) {
+    const key = m.placements.map(p => `${p.r},${p.c},${p.letter}`).sort().join('|');
+    const prev = seen.get(key);
+    if (!prev || m.score > prev.score) seen.set(key, m);
+  }
+  return [...seen.values()];
+}
