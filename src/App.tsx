@@ -16,18 +16,22 @@ function GameShell() {
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
 
-  if (!dict) return <p className="p-6">辞書を読み込み中…</p>;
-
   if (state.status === 'setup') {
     return (
-      <div className="p-6 text-center">
+      <div className="p-6 text-center flex flex-col items-center gap-3">
         <h1 className="font-pixel text-2xl mb-4">Toy Scrabble</h1>
         <button
-          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2"
+          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={!dict}
           onClick={() => dispatch({ type: 'START_GAME', mode: 'free' })}
         >
-          NEW GAME
+          {dict ? 'NEW GAME' : '読み込み中…'}
         </button>
+        {!dict && (
+          <p className="font-pixel text-[10px] text-stone-400">
+            辞書を読み込んでいます (約 2.7MB)
+          </p>
+        )}
       </div>
     );
   }
@@ -46,13 +50,17 @@ function GameShell() {
         </div>
         <button
           onClick={() => dispatch({ type: 'START_GAME', mode: state.mode })}
-          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2"
+          className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2 disabled:opacity-40"
+          disabled={!dict}
         >
-          NEW GAME
+          {dict ? 'NEW GAME' : '読み込み中…'}
         </button>
       </div>
     );
   }
+
+  // playing: dict は START_GAME 時点で必ずロード済み（setup 画面でボタンを無効化しているため）
+  if (!dict) return null;
 
   const current = state.players[state.currentPlayerIndex];
 
