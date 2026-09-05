@@ -2,9 +2,11 @@ import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
 import { Rack } from './ui/Rack';
 import { ScorePanel } from './ui/ScorePanel';
+import { useSelectedTile } from './state/uiState';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
+  const { selectedIndex, setSelectedIndex } = useSelectedTile();
 
   if (!dict) return <p className="p-6">辞書を読み込み中…</p>;
 
@@ -23,6 +25,22 @@ function GameShell() {
   }
 
   const current = state.players[state.currentPlayerIndex];
+
+  function handleCellClick(r: number, c: number) {
+    if (state.pending.some(p => p.coord.r === r && p.coord.c === c)) {
+      dispatch({ type: 'RECALL_PENDING', coord: { r, c } });
+      return;
+    }
+    if (selectedIndex !== null && state.board[r][c] === null) {
+      const tile = current.rack[selectedIndex];
+      dispatch({
+        type: 'PLACE_PENDING',
+        placement: { coord: { r, c }, tile, rackIndex: selectedIndex },
+      });
+      setSelectedIndex(null);
+    }
+  }
+
   return (
     <div className="p-4 flex flex-col items-center gap-3">
       <h1 className="font-pixel text-xl">Toy Scrabble</h1>
@@ -32,8 +50,12 @@ function GameShell() {
         bagRemaining={state.bag.length}
         currentPlayerId={current.id}
       />
-      <Board board={state.board} pending={state.pending} onCellClick={() => {}} />
-      <Rack rack={current.rack} selectedIndex={null} onSelect={() => {}} />
+      <Board board={state.board} pending={state.pending} onCellClick={handleCellClick} />
+      <Rack
+        rack={current.rack}
+        selectedIndex={selectedIndex}
+        onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
+      />
     </div>
   );
 }
