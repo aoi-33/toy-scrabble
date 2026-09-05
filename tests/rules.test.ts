@@ -26,3 +26,61 @@ describe('detectDirection', () => {
     expect(detectDirection(ps)).toBeNull();
   });
 });
+
+import { validatePlacement } from '../src/game/rules';
+import { createEmptyBoard } from '../src/game/board';
+import { createDictionaryFromText } from '../src/game/dictionary';
+import type { Board } from '../src/game/types';
+
+const dict = createDictionaryFromText('CAT\nCATS\nAT\nBAT\nCAB\nCABS\nAB\n');
+
+function place(board: Board, r: number, c: number, letter: string, turn = 1): Board {
+  const b = board.map(row => [...row]);
+  b[r][c] = { tile: { kind: 'letter', letter: letter as Letter, points: 1 }, placedTurn: turn };
+  return b;
+}
+
+describe('validatePlacement — geometry', () => {
+  it('fails on empty placements', () => {
+    const res = validatePlacement(createEmptyBoard(), [], dict, true);
+    expect(res.ok).toBe(false);
+  });
+
+  it('fails when placements not on a straight line', () => {
+    const ps = [P(7, 7, 'C'), P(8, 8, 'A')];
+    const res = validatePlacement(createEmptyBoard(), ps, dict, true);
+    expect(res.ok).toBe(false);
+  });
+
+  it('fails on first move when placements do not cover center', () => {
+    const ps = [P(0, 0, 'C'), P(0, 1, 'A'), P(0, 2, 'T')];
+    const res = validatePlacement(createEmptyBoard(), ps, dict, true);
+    expect(res.ok).toBe(false);
+  });
+
+  it('succeeds on first move through center forming a valid word', () => {
+    const ps = [P(7, 6, 'C'), P(7, 7, 'A'), P(7, 8, 'T')];
+    const res = validatePlacement(createEmptyBoard(), ps, dict, true);
+    expect(res.ok).toBe(true);
+  });
+
+  it('fails when placements have gaps not filled by existing tiles', () => {
+    const ps = [P(7, 6, 'C'), P(7, 8, 'T')];
+    const res = validatePlacement(createEmptyBoard(), ps, dict, true);
+    expect(res.ok).toBe(false);
+  });
+
+  it('fails on second move when new tiles are not adjacent to any existing tile', () => {
+    let b = createEmptyBoard();
+    b = place(b, 7, 7, 'A');
+    const ps = [P(0, 0, 'C'), P(0, 1, 'A'), P(0, 2, 'T')];
+    const res = validatePlacement(b, ps, dict, false);
+    expect(res.ok).toBe(false);
+  });
+
+  it('fails when a formed word is not in the dictionary', () => {
+    const ps = [P(7, 6, 'X'), P(7, 7, 'Y'), P(7, 8, 'Z')];
+    const res = validatePlacement(createEmptyBoard(), ps, dict, true);
+    expect(res.ok).toBe(false);
+  });
+});
