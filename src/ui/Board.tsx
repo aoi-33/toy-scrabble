@@ -1,3 +1,5 @@
+import type React from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import type { Board as BoardType, PendingPlacement } from '../game/types';
 import { PREMIUM_BOARD } from '../game/board';
 import { Tile } from './Tile';
@@ -9,6 +11,39 @@ const PREMIUM_LABEL: Record<string, { label: string; className: string }> = {
   TW: { label: 'TW', className: 'bg-premium-tw text-white' },
   STAR: { label: '★', className: 'bg-premium-dw' },
 };
+
+function DroppableCell({
+  r,
+  c,
+  isEmpty,
+  cellClassName,
+  children,
+  onClick,
+}: {
+  r: number;
+  c: number;
+  isEmpty: boolean;
+  cellClassName: string;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `cell-${r}-${c}`,
+    data: { r, c },
+    disabled: !isEmpty,
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      role="gridcell"
+      aria-label={`cell-${r}-${c}`}
+      className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[8px] font-pixel ${cellClassName} ${isOver ? 'ring-2 ring-yellow-400' : ''}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function Board({
   board,
@@ -33,14 +68,17 @@ export function Board({
           const premium = PREMIUM_BOARD[r][c];
           const premiumInfo = premium ? PREMIUM_LABEL[premium] : null;
           const pendingHere = pendingMap.get(`${r},${c}`);
+          const isEmpty = !cell && !pendingHere;
+          const cellClassName = isEmpty
+            ? (premiumInfo?.className ?? 'bg-cell-bg')
+            : '';
           return (
-            <button
+            <DroppableCell
               key={`${r},${c}`}
-              role="gridcell"
-              aria-label={`cell-${r}-${c}`}
-              className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[8px] font-pixel ${
-                cell || pendingHere ? '' : premiumInfo?.className ?? 'bg-cell-bg'
-              }`}
+              r={r}
+              c={c}
+              isEmpty={isEmpty}
+              cellClassName={cellClassName}
               onClick={() => onCellClick(r, c)}
             >
               {cell ? (
@@ -52,7 +90,7 @@ export function Board({
               ) : (
                 <span>{premiumInfo?.label ?? ''}</span>
               )}
-            </button>
+            </DroppableCell>
           );
         }),
       )}
