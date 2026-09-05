@@ -3,7 +3,9 @@ import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
 import { Rack } from './ui/Rack';
 import { ScorePanel } from './ui/ScorePanel';
+import { ActionBar } from './ui/ActionBar';
 import { useSelectedTile } from './state/uiState';
+import { seededRng } from './game/bag';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
@@ -74,6 +76,33 @@ function GameShell() {
           selectedIndex={selectedIndex}
           onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
         />
+        <ActionBar
+          canPlay={state.pending.length > 0}
+          canRecall={state.pending.length > 0}
+          onPlay={() => dispatch({ type: 'COMMIT_PLAY', dict })}
+          onRecall={() => dispatch({ type: 'RECALL_ALL' })}
+          onShuffle={() => dispatch({ type: 'SHUFFLE_RACK', rng: seededRng(Date.now()) })}
+          onPass={() => {
+            // eslint-disable-next-line no-undef
+            if (confirm('本当に PASS しますか？')) dispatch({ type: 'PASS' });
+          }}
+          onExchange={() => {
+            // eslint-disable-next-line no-undef
+            alert('EXCHANGE は Task 7.1 で実装します');
+          }}
+        />
+
+        {state.lastError && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded font-pixel text-xs">
+            {state.lastError}
+            <button
+              className="ml-2 underline"
+              onClick={() => dispatch({ type: 'CLEAR_ERROR' })}
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
     </DndContext>
   );
