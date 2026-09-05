@@ -109,6 +109,12 @@ function GameShell() {
           selectedIndex={selectedIndex}
           onSelect={i => setSelectedIndex(i === selectedIndex ? null : i)}
         />
+        {state.lastFormedWords.length > 0 && (
+          <div className="font-pixel text-xs text-stone-300">
+            直前手: {state.lastFormedWords.map(w => w.word).join(' + ')}
+            （+{state.history[state.history.length - 1]?.score ?? 0}）
+          </div>
+        )}
         <ActionBar
           canPlay={state.pending.length > 0}
           canRecall={state.pending.length > 0}
