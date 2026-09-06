@@ -80,6 +80,13 @@
 
 ## Task 0: eslint の `no-undef` を TypeScript ファイルで無効化する
 
+> **保留（2026-09-07）。実行環境の制約により着手できない。**
+> `ecc` プラグインの `config-protection` フックが `eslint.config.js` への Edit / Write を無条件でブロックする（保護対象は eslint / prettier / biome / ruff などの linter 設定ファイル。`tailwind.config.js` は対象外なので Task 1 以降は影響なし）。フックの無効化スイッチ `ECC_DISABLED_HOOKS=pre:config-protection` は環境変数のためエージェント側からは設定できず、`.claude/settings.local.json` 経由の設定も保護パスとしてブロックされる。
+>
+> **Task 1 以降への影響:** `no-undef` は有効なままなので、新しく書く `window` / `matchMedia` / `KeyboardEvent` / `HTMLElement` などの DOM 識別子には、既存コードと同じく `// eslint-disable-next-line no-undef` を付ける必要がある。**型注釈の位置（`function f(e: KeyboardEvent)` など）でも発火する**ことに注意。以降のタスクのコード例には disable コメントを記載していないので、実装時に補うこと。
+>
+> 将来フックを一時無効化できる状況になったら、下記の手順をそのまま実行できる。
+
 **Files:**
 - Modify: `eslint.config.js`
 - Modify: `src/App.tsx`, `src/main.tsx`, `src/ai/useAiWorker.ts`, `src/ai/worker.ts`, `src/ai/search.ts`, `src/game/dictionary.ts`, `src/state/GameContext.tsx`, `tests/ai/search.test.ts`, `tests/ui/App.aiTurn.test.tsx`
