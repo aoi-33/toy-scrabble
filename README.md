@@ -2,7 +2,7 @@
 
 日本人英語学習者向けの Scrabble（英単語クロスワードボードゲーム）静的サイト。
 現時点でフリープレイ + COM 対戦 (Easy/Medium/Hard) に対応しています。
-英英・英和辞書表示（Plan 3）、モバイル対応と GitHub Pages デプロイ（Plan 4）は後続計画で実装します。
+英英・英和辞書表示（Plan 3）は後続計画で実装します。モバイル対応と GitHub Pages デプロイ（Plan 4）は実装済みです。
 
 ## 遊び方（Plan 1 時点）
 
@@ -35,10 +35,10 @@ npm run test       # unit + component (Vitest)
 
 - 辞書は `public/dict/twl06.sample.txt`（サンプル数十語）のみ。フル TWL06（18 万語）は Plan 3 で導入
 - 単語の意味表示（英英・英和辞書）は未実装 → Plan 3 で導入予定
-- モバイル最適化・GitHub Pages 自動デプロイは未実装
 
 ## 変更履歴
 
+- **2026-09-07** Plan 4 完了: モバイル対応（レスポンシブ盤面・タッチドラッグ・ボトムシート）と GitHub Pages 自動デプロイを追加。
 - **2026-09-06** Plan 2 完了: COM 対戦 (Easy / Medium / Hard) を追加。AI は Web Worker で動作、思考時間 ≤ 1s。
 - **2026-09-05** Plan 1 完了: フリープレイでの基本ゲームプレイを実装。
 
@@ -46,6 +46,27 @@ npm run test       # unit + component (Vitest)
 
 - GitHub: `aoi-33/toy-scrabble`
 - デプロイ URL（Plan 4 完了後）: `https://aoi-33.github.io/toy-scrabble/`
+
+## デプロイ
+
+`main` へ push すると GitHub Actions（`.github/workflows/deploy.yml`）が lint → test → build を実行し、`dist/` を GitHub Pages へ publish します。
+
+公開 URL: `https://aoi-33.github.io/toy-scrabble/`
+
+初回のみリポジトリ側で以下の設定が必要です。
+
+1. GitHub 上に `aoi-33/toy-scrabble` リポジトリを作成する
+2. `git remote add origin git@github.com:aoi-33/toy-scrabble.git && git push -u origin main`
+3. Settings → Pages → Build and deployment → Source を **GitHub Actions** に変更する
+
+**3 は初回 push より前に済ませてください。** 未設定のまま push すると deploy ジョブが `Get Pages site failed` で失敗します。
+
+辞書ファイル `public/dict/twl06.txt` は `.gitignore` 済みですが、`prebuild` が npm の `word-list` パッケージから毎回生成するため CI でも同じものが作られます。
+
+## 対応環境
+
+- スマートフォン（幅 320px 〜）: 手札と操作ボタンは画面下部に固定。タイルは長押しでドラッグ、タップでも配置できます
+- PC（幅 769px 〜）: Enter で PLAY、Escape で仮配置を全て戻す
 
 ## ライセンス
 
