@@ -19,6 +19,7 @@ describe('<Sheet>', () => {
         <p>本文</p>
       </Sheet>,
     );
+    // eslint-disable-next-line no-undef
     const overlay = container.firstElementChild as HTMLElement;
     expect(overlay.className).toContain('items-end');
     expect(overlay.className).toContain('md:items-center');
@@ -31,6 +32,7 @@ describe('<Sheet>', () => {
         <p>本文</p>
       </Sheet>,
     );
+    // eslint-disable-next-line no-undef
     fireEvent.click(container.firstElementChild as HTMLElement);
     expect(onDismiss).toHaveBeenCalled();
   });
@@ -53,6 +55,7 @@ describe('<Sheet>', () => {
         <p>本文</p>
       </Sheet>,
     );
+    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
@@ -63,11 +66,14 @@ describe('<Sheet>', () => {
         <p>本文</p>
       </Sheet>,
     );
+    // eslint-disable-next-line no-undef
     expect(document.activeElement).toBe(screen.getByRole('dialog'));
   });
 
   it('閉じたとき元の要素へフォーカスを戻す', () => {
+    // eslint-disable-next-line no-undef
     const trigger = document.createElement('button');
+    // eslint-disable-next-line no-undef
     document.body.appendChild(trigger);
     trigger.focus();
     const { unmount } = render(
@@ -76,6 +82,7 @@ describe('<Sheet>', () => {
       </Sheet>,
     );
     unmount();
+    // eslint-disable-next-line no-undef
     expect(document.activeElement).toBe(trigger);
     trigger.remove();
   });
