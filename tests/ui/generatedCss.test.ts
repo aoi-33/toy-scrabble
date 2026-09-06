@@ -66,3 +66,34 @@ describe('Tailwind ブレークポイント', () => {
     expect(css).not.toContain('@media (min-width: 640px)');
   });
 });
+
+describe('セルサイズの CSS 変数', () => {
+  it('モバイルでは 92vw を 15 分割し、下限 20px を保証する', () => {
+    expect(css).toMatch(/--cell-size:\s*max\(20px,\s*calc\(\(92vw - 22px\)\s*\/\s*15\)\)/);
+  });
+
+  it('手札タイルは 44px を下回らない', () => {
+    expect(css).toMatch(/--rack-tile-size:\s*max\(44px,\s*var\(--cell-size\)\)/);
+  });
+
+  it('PC(769px〜) では --cell-size を固定値に切り替える', () => {
+    expect(css).toContain('@media (min-width: 769px)');
+    // 769px ブロック内で --cell-size が 36px に上書きされていること
+    const pcBlock = css.slice(css.indexOf('@media (min-width: 769px)'));
+    expect(pcBlock).toMatch(/--cell-size:\s*36px/);
+  });
+});
+
+describe('viewport メタ', () => {
+  // new URL(..., import.meta.url) は jsdom 環境で "The URL must be of scheme file"
+  // になるため使わない。vitest の cwd はプロジェクトルートなので相対パスで読む。
+  const html = readFileSync('index.html', 'utf8');
+
+  it('セーフエリアを使うため viewport-fit=cover を指定する', () => {
+    expect(html).toMatch(/viewport-fit=cover/);
+  });
+
+  it('ブラウザ UI の色をアプリの背景に合わせる', () => {
+    expect(html).toMatch(/<meta name="theme-color" content="#1a3d24"/);
+  });
+});
