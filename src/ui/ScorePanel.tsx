@@ -12,7 +12,7 @@ export function ScorePanel({
   currentPlayerId: PlayerId;
 }) {
   return (
-    <div className="flex justify-between items-center gap-4 font-pixel text-xs p-2 bg-stone-800">
+    <div className="w-full max-w-[92vw] flex justify-between items-center gap-2 sm:gap-4 font-pixel text-[10px] sm:text-xs p-2 bg-stone-800">
       <div aria-label={currentPlayerId === 'P1' ? 'current-player-P1' : undefined}>
         P1: <span className="text-yellow-300">{p1Score}</span>
       </div>

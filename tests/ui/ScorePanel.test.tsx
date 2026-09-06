@@ -15,4 +15,12 @@ describe('<ScorePanel>', () => {
     render(<ScorePanel p1Score={0} comScore={0} bagRemaining={100} currentPlayerId="COM" />);
     expect(screen.getByLabelText('current-player-COM')).toBeInTheDocument();
   });
+
+  it('横幅いっぱいに広がる', () => {
+    const { container } = render(
+      <ScorePanel p1Score={0} comScore={0} bagRemaining={100} currentPlayerId="P1" />,
+    );
+    // eslint-disable-next-line no-undef
+    expect((container.firstElementChild as HTMLElement).className).toContain('w-full');
+  });
 });
