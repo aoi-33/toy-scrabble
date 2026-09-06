@@ -14,6 +14,7 @@ import { useAiWorker } from './ai/useAiWorker';
 import { boardToSnapshot, rackToSnapshot } from './ai/snapshot';
 import type { Difficulty } from './ai/types';
 import { useDndSensors } from './ui/dndSensors';
+import { useMediaQuery } from './ui/useMediaQuery';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
@@ -23,6 +24,8 @@ function GameShell() {
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
   const sensors = useDndSensors();
+  // キーボードショートカットは PC のみ（design.md §5.6）
+  const isDesktop = useMediaQuery('(min-width: 769px)');
 
   // ワーカーは dispatch 前に ready へ戻るため、手番キーで二重依頼と遅延結果の誤適用を防ぐ
   const turnKey = `${state.status}:${state.turn}:${state.currentPlayerIndex}`;
@@ -99,6 +102,43 @@ function GameShell() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.history.length]);
+
+  // Enter = PLAY / Escape = RECALL ALL（PC のみ、design.md §5.6）
+  const canPlay = state.status === 'playing' && state.pending.length > 0;
+  const isHumanTurn =
+    state.status === 'playing' &&
+    (state.mode === 'free' || state.players[state.currentPlayerIndex].id !== 'COM');
+  // シート表示中はショートカットを止める。Escape は Sheet 側が「閉じる」に使う
+  const isSheetOpen = pendingBlank !== null || showExchange;
+
+  useEffect(() => {
+    if (!isDesktop || !isHumanTurn || isSheetOpen) return;
+
+    // eslint-disable-next-line no-undef
+    function onKeyDown(e: KeyboardEvent) {
+      // 押しっぱなしの連射と、ブラウザ標準ショートカットの横取りを避ける
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (e.key === 'Enter') {
+        // ボタンや入力欄にフォーカスがある Enter は、その要素の操作が本来の意味
+        // eslint-disable-next-line no-undef
+        const tag = document.activeElement?.tagName;
+        if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (!canPlay || !dict) return;
+        e.preventDefault();
+        dispatch({ type: 'COMMIT_PLAY', dict });
+      } else if (e.key === 'Escape') {
+        if (!canPlay) return;
+        e.preventDefault();
+        dispatch({ type: 'RECALL_ALL' });
+      }
+    }
+
+    // eslint-disable-next-line no-undef
+    window.addEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line no-undef
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isDesktop, isHumanTurn, isSheetOpen, canPlay, dict, dispatch]);
 
   if (state.status === 'setup') {
     return (

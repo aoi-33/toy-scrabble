@@ -30,6 +30,11 @@ describe('COM の手番', () => {
     );
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ text: async () => 'CAT\nDOG\n' }));
     vi.stubGlobal('confirm', () => true);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
   });
 
   afterEach(() => {
