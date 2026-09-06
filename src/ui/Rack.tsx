@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import type { Tile as TileType } from '../game/types';
 import { Tile } from './Tile';
@@ -17,9 +18,13 @@ function DraggableRackTile({
     id: `rack-${index}`,
     data: { source: 'rack', index },
   });
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
+  // touch-action: none が無いとタッチがスクロールに奪われ、ドラッグが始まらない
+  const style: React.CSSProperties = {
+    touchAction: 'none',
+    ...(transform
+      ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+      : {}),
+  };
   return (
     <button
       ref={setNodeRef}
@@ -27,7 +32,9 @@ function DraggableRackTile({
       {...listeners}
       {...attributes}
       onClick={onSelect}
-      className={`${selected ? 'ring-4 ring-yellow-300' : ''} ${isDragging ? 'opacity-50' : ''}`}
+      className={`shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${
+        selected ? 'ring-4 ring-yellow-300' : ''
+      } ${isDragging ? 'opacity-50' : ''}`}
       aria-label={`rack-${index}`}
       type="button"
     >
@@ -46,7 +53,13 @@ export function Rack({
   onSelect: (index: number) => void;
 }) {
   return (
-    <div className="inline-flex gap-1 p-2 bg-stone-800 rounded">
+    <div
+      data-testid="rack-tiles"
+      // 44px*7 + gap + padding = 348px。320px 端末には収まらないので横スクロールで逃がす
+      className="flex gap-1 p-2 bg-stone-800 rounded max-w-full overflow-x-auto"
+      // 手札タイルだけ盤面セルより大きくする
+      style={{ '--cell-size': 'var(--rack-tile-size)' } as React.CSSProperties}
+    >
       {rack.map((tile, i) => (
         <DraggableRackTile
           key={i}
