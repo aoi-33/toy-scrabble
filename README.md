@@ -45,7 +45,6 @@ npm run test       # unit + component (Vitest)
 ## リポジトリ
 
 - GitHub: `aoi-33/toy-scrabble`
-- デプロイ URL（Plan 4 完了後）: `https://aoi-33.github.io/toy-scrabble/`
 
 ## デプロイ
 
