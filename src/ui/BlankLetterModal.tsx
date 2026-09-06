@@ -20,13 +20,13 @@ export function BlankLetterModal({
               type="button"
               onClick={() => onSelect(l)}
               aria-label={`letter-${l}`}
-              className="w-8 h-8 bg-tile-wood text-stone-900 font-bold"
+              className="min-w-[44px] min-h-[44px] bg-tile-wood text-stone-900 font-bold"
             >
               {l}
             </button>
           ))}
         </div>
-        <button onClick={onCancel} className="mt-3 text-xs text-stone-300 underline">
+        <button onClick={onCancel} className="mt-3 px-3 min-h-[44px] text-xs text-stone-300 underline">
           キャンセル
         </button>
       </div>

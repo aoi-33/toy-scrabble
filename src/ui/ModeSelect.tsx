@@ -32,7 +32,7 @@ export function ModeSelect({
             onClick={() => opt.enabled && onSelect(opt.mode)}
             disabled={isDisabled}
             aria-label={`mode-${opt.mode}`}
-            className={`relative font-pixel text-xs px-4 py-3 text-left transition ${
+            className={`relative font-pixel text-xs px-4 py-3 min-h-[44px] text-left transition ${
               opt.enabled
                 ? 'bg-yellow-300 text-stone-900 hover:bg-yellow-200 disabled:opacity-40 disabled:cursor-not-allowed'
                 : 'bg-stone-700 text-stone-400 cursor-not-allowed'

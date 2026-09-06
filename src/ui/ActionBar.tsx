@@ -20,24 +20,24 @@ export function ActionBar({
       <button
         onClick={onPlay}
         disabled={!canPlay}
-        className="font-pixel text-xs bg-green-500 text-white px-3 py-2 disabled:opacity-40"
+        className="font-pixel text-xs bg-green-500 text-white px-3 min-h-[44px] disabled:opacity-40"
       >
         PLAY
       </button>
       <button
         onClick={onRecall}
         disabled={!canRecall}
-        className="font-pixel text-xs bg-stone-500 text-white px-3 py-2 disabled:opacity-40"
+        className="font-pixel text-xs bg-stone-500 text-white px-3 min-h-[44px] disabled:opacity-40"
       >
         RECALL
       </button>
-      <button onClick={onExchange} className="font-pixel text-xs bg-stone-600 text-white px-3 py-2">
+      <button onClick={onExchange} className="font-pixel text-xs bg-stone-600 text-white px-3 min-h-[44px]">
         EXCHANGE
       </button>
-      <button onClick={onShuffle} className="font-pixel text-xs bg-stone-600 text-white px-3 py-2">
+      <button onClick={onShuffle} className="font-pixel text-xs bg-stone-600 text-white px-3 min-h-[44px]">
         SHUFFLE
       </button>
-      <button onClick={onPass} className="font-pixel text-xs bg-red-500 text-white px-3 py-2">
+      <button onClick={onPass} className="font-pixel text-xs bg-red-500 text-white px-3 min-h-[44px]">
         PASS
       </button>
     </div>

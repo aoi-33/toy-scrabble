@@ -38,4 +38,9 @@ describe('<ModeSelect>', () => {
     expect(screen.getByLabelText('mode-free')).toBeDisabled();
     expect(screen.getByLabelText('mode-com-easy')).toBeDisabled();
   });
+
+  it('モードボタンが 44px 以上のタッチターゲットを持つ', () => {
+    render(<ModeSelect disabled={false} onSelect={() => {}} />);
+    expect(screen.getByLabelText('mode-com-easy').className).toContain('min-h-[44px]');
+  });
 });

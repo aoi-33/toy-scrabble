@@ -278,7 +278,8 @@ function GameShell() {
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded font-pixel text-xs">
             {state.lastError}
             <button
-              className="ml-2 underline"
+              className="ml-2 px-3 min-h-[44px] min-w-[44px] underline"
+              aria-label="エラーを閉じる"
               onClick={() => dispatch({ type: 'CLEAR_ERROR' })}
             >
               ✕
