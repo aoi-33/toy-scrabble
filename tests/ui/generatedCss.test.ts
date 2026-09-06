@@ -95,11 +95,13 @@ describe('タイルと盤面セルのサイズ', () => {
     expect(css).toContain('font-size: calc(var(--cell-size) * 0.5)');
   });
 
-  it('固定サイズの w-8 / h-8 はもう使われていない', () => {
-    // 使われていないクラスは Tailwind の content 走査で出力されない。
-    // Tile.tsx や Board.tsx を w-8 に戻すとこのテストが落ちる。
-    expect(css).not.toContain('.w-8 {');
-    expect(css).not.toContain('.h-8 {');
+  it('固定サイズのブレークポイント別クラスはもう使われていない', () => {
+    // 使われていないクラスは Tailwind の content 走査で出力されないので、
+    // Tile.tsx や Board.tsx を sm:w-9 に戻すとこのテストが落ちる。
+    // 生成 CSS のセレクタは `.sm\:w-9{` のように `:` がエスケープされ、
+    // `{` の前に空白は入らない。
+    expect(css).not.toContain('.sm\\:w-9');
+    expect(css).not.toContain('.sm\\:h-9');
   });
 });
 
