@@ -74,6 +74,9 @@ export function validatePlacement(
   }
 
   const formedWords = extractAllFormedWords(board, sorted, direction);
+  if (formedWords.length === 0) {
+    return { ok: false, reason: '1 文字だけでは単語になりません' };
+  }
   for (const fw of formedWords) {
     if (!isValidWord(dict, fw.word)) {
       return { ok: false, reason: `'${fw.word}' は辞書にありません` };

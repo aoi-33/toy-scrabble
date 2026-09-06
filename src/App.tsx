@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
@@ -22,13 +22,26 @@ function GameShell() {
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
 
+  // ワーカーは dispatch 前に ready へ戻るため、手番キーで二重依頼と遅延結果の誤適用を防ぐ
+  const turnKey = `${state.status}:${state.turn}:${state.currentPlayerIndex}`;
+  const currentTurnKeyRef = useRef(turnKey);
   useEffect(() => {
-    if (state.status !== 'playing') return;
+    currentTurnKeyRef.current = turnKey;
+  });
+  const aiRequestedKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state.status !== 'playing') {
+      aiRequestedKeyRef.current = null;
+      return;
+    }
     if (state.mode === 'free') return;
     const currentId = state.players[state.currentPlayerIndex].id;
     if (currentId !== 'COM') return;
     if (ai.state !== 'ready') return;
     if (!dict) return;
+    if (aiRequestedKeyRef.current === turnKey) return;
+    aiRequestedKeyRef.current = turnKey;
     const difficulty: Difficulty =
       state.mode === 'com-easy' ? 'easy' :
       state.mode === 'com-medium' ? 'medium' : 'hard';
@@ -47,6 +60,7 @@ function GameShell() {
     Promise.all([ai.requestMove(snap, difficulty), minDelay]).then(([move]) => {
       // eslint-disable-next-line no-undef
       console.log('[AI] chose move:', move);
+      if (currentTurnKeyRef.current !== turnKey) return;
       if (move.kind === 'pass') {
         dispatch({ type: 'PASS' });
       } else if (move.kind === 'exchange') {
@@ -57,10 +71,11 @@ function GameShell() {
     }).catch(err => {
       // eslint-disable-next-line no-undef
       console.error('[AI] move failed, passing:', err);
+      if (currentTurnKeyRef.current !== turnKey) return;
       dispatch({ type: 'PASS' });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.status, state.currentPlayerIndex, state.mode, ai.state]);
+  }, [turnKey, state.mode, ai.state]);
 
   // COM の直近手をトースト表示（3.5 秒で自動消去）
   const [comToast, setComToast] = useState<string | null>(null);
@@ -92,7 +107,7 @@ function GameShell() {
         </p>
         <ModeSelect
           disabled={!dict}
-          onSelect={mode => dispatch({ type: 'START_GAME', mode })}
+          onSelect={mode => dispatch({ type: 'START_GAME', mode, rng: seededRng(Date.now()) })}
         />
         {!dict && (
           <p className="font-pixel text-[10px] text-stone-400">
@@ -116,7 +131,7 @@ function GameShell() {
           P1: {p1.score}{'　'}COM: {com.score}
         </div>
         <button
-          onClick={() => dispatch({ type: 'START_GAME', mode: state.mode })}
+          onClick={() => dispatch({ type: 'START_GAME', mode: state.mode, rng: seededRng(Date.now()) })}
           className="font-pixel bg-yellow-300 text-stone-900 px-4 py-2 disabled:opacity-40"
           disabled={!dict}
         >
@@ -145,7 +160,7 @@ function GameShell() {
         placement: { coord: { r, c }, tile, rackIndex: selectedIndex },
       });
       setSelectedIndex(null);
-      if (tile.kind === 'blank' && tile.assigned === null) {
+      if (tile.kind === 'blank') {
         setPendingBlank({ r, c });
       }
     }
@@ -165,7 +180,7 @@ function GameShell() {
         placement: { coord: { r, c }, tile, rackIndex: index },
       });
       setSelectedIndex(null);
-      if (tile.kind === 'blank' && tile.assigned === null) {
+      if (tile.kind === 'blank') {
         setPendingBlank({ r, c });
       }
     }

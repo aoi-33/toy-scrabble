@@ -27,7 +27,7 @@ export function createInitialState(opts: { seed: number; dict: Dictionary }): Ga
 }
 
 export type Action =
-  | { type: 'START_GAME'; mode: GameMode }
+  | { type: 'START_GAME'; mode: GameMode; rng: Rng }
   | { type: 'PLACE_PENDING'; placement: PendingPlacement }
   | { type: 'RECALL_PENDING'; coord: { r: number; c: number } }
   | { type: 'RECALL_ALL' }
@@ -38,6 +38,11 @@ export type Action =
   | { type: 'SHUFFLE_RACK'; rng: Rng }
   | { type: 'ASSIGN_BLANK'; r: number; c: number; letter: Letter }
   | { type: 'CLEAR_ERROR' };
+
+/** 手札へ戻すタイル。ブランクは指定文字を解除し、再配置時に選び直せるようにする。 */
+function toRackTile(tile: Tile): Tile {
+  return tile.kind === 'blank' ? { kind: 'blank', assigned: null, points: 0 } : tile;
+}
 
 function nextPlayerAndCheckEnd(
   state: GameState,
@@ -70,12 +75,13 @@ function nextPlayerAndCheckEnd(
 export function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'START_GAME': {
-      const [p1Rack, afterP1] = drawTiles(state.bag, 7);
+      const [p1Rack, afterP1] = drawTiles(createBag(action.rng), 7);
       const [comRack, afterCom] = drawTiles(afterP1, 7);
       return {
         ...state,
         mode: action.mode,
         status: 'playing',
+        board: createEmptyBoard(),
         bag: afterCom,
         players: [
           { ...state.players[0], rack: p1Rack, score: 0 },
@@ -105,7 +111,7 @@ export function reducer(state: GameState, action: Action): GameState {
       const removed = state.pending.find(p => p.coord.r === r && p.coord.c === c);
       if (!removed) return state;
       const p = state.players[state.currentPlayerIndex];
-      const newRack = [...p.rack, removed.tile];
+      const newRack = [...p.rack, toRackTile(removed.tile)];
       const newPending = state.pending.filter(p2 => !(p2.coord.r === r && p2.coord.c === c));
       const newPlayers = [...state.players] as GameState['players'];
       newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
@@ -114,7 +120,7 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'RECALL_ALL': {
       if (state.pending.length === 0) return state;
       const p = state.players[state.currentPlayerIndex];
-      const newRack = [...p.rack, ...state.pending.map(x => x.tile)];
+      const newRack = [...p.rack, ...state.pending.map(x => toRackTile(x.tile))];
       const newPlayers = [...state.players] as GameState['players'];
       newPlayers[state.currentPlayerIndex] = { ...p, rack: newRack };
       return { ...state, players: newPlayers, pending: [] };
@@ -162,6 +168,11 @@ export function reducer(state: GameState, action: Action): GameState {
       };
 
       const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
+      const endInfo = nextPlayerAndCheckEnd(
+        { ...state, players: newPlayers, bag: newBag },
+        nextIndex,
+        0,
+      );
 
       return {
         ...state,
@@ -169,13 +180,12 @@ export function reducer(state: GameState, action: Action): GameState {
         bag: newBag,
         players: newPlayers,
         pending: [],
-        currentPlayerIndex: nextIndex,
         turn: state.turn + 1,
         history: [...state.history, record],
         lastFormedWords: result.formedWords,
         lastAiPlacedCoords: [],
-        consecutivePasses: 0,
         lastError: null,
+        ...endInfo,
       };
     }
     case 'COMMIT_AI_PLAY': {
@@ -217,19 +227,23 @@ export function reducer(state: GameState, action: Action): GameState {
         score: result.score,
       };
       const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
+      const endInfo = nextPlayerAndCheckEnd(
+        { ...state, players: newPlayers, bag: newBag },
+        nextIndex,
+        0,
+      );
       return {
         ...state,
         board: newBoard,
         bag: newBag,
         players: newPlayers,
         pending: [],
-        currentPlayerIndex: nextIndex,
         turn: state.turn + 1,
         history: [...state.history, record],
         lastFormedWords: result.formedWords,
         lastAiPlacedCoords: action.placements.map(pl => pl.coord),
-        consecutivePasses: 0,
         lastError: null,
+        ...endInfo,
       };
     }
     case 'EXCHANGE': {
@@ -237,7 +251,9 @@ export function reducer(state: GameState, action: Action): GameState {
         return { ...state, lastError: '袋の残りが 7 枚未満のため交換できません' };
       }
       const p = state.players[state.currentPlayerIndex];
-      const keep = p.rack.filter((_, i) => !action.indices.includes(i));
+      // 仮配置は交換対象に含まれないので、手札へ戻してからタイル総数を保つ
+      const restored = state.pending.map(pl => toRackTile(pl.tile));
+      const keep = [...p.rack.filter((_, i) => !action.indices.includes(i)), ...restored];
       const removed = p.rack.filter((_, i) => action.indices.includes(i));
       const newBag = [...state.bag, ...removed];
       for (let i = newBag.length - 1; i > 0; i--) {
@@ -271,11 +287,19 @@ export function reducer(state: GameState, action: Action): GameState {
     }
     case 'PASS': {
       const p = state.players[state.currentPlayerIndex];
+      // 仮配置を残したまま手番を渡すと相手の手札に混ざるため、先に戻す
+      const newPlayers = [...state.players] as GameState['players'];
+      newPlayers[state.currentPlayerIndex] = {
+        ...p,
+        rack: [...p.rack, ...state.pending.map(pl => toRackTile(pl.tile))],
+      };
       const nextIndex = (state.currentPlayerIndex === 0 ? 1 : 0) as 0 | 1;
       const newConsecutive = state.consecutivePasses + 1;
-      const endInfo = nextPlayerAndCheckEnd(state, nextIndex, newConsecutive);
+      const endInfo = nextPlayerAndCheckEnd({ ...state, players: newPlayers }, nextIndex, newConsecutive);
       return {
         ...state,
+        players: newPlayers,
+        pending: [],
         turn: state.turn + 1,
         history: [
           ...state.history,

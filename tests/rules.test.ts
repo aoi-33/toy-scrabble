@@ -41,6 +41,13 @@ function place(board: Board, r: number, c: number, letter: string, turn = 1): Bo
   return b;
 }
 
+describe('validatePlacement — 単語を作らない配置', () => {
+  it('初手に中央へ 1 枚だけ置く配置を拒否する', () => {
+    const res = validatePlacement(createEmptyBoard(), [P(7, 7, 'Q')], dict, true);
+    expect(res.ok).toBe(false);
+  });
+});
+
 describe('validatePlacement — geometry', () => {
   it('fails on empty placements', () => {
     const res = validatePlacement(createEmptyBoard(), [], dict, true);

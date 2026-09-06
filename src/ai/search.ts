@@ -40,6 +40,19 @@ function inBounds(r: number, c: number): boolean {
   return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
 }
 
+/** スナップショットの小文字はブランク由来なので 0 点。 */
+function charPoints(ch: string): number {
+  return ch === ch.toLowerCase() ? 0 : LETTER_POINTS[ch as Letter];
+}
+
+/** 語の直後に既存タイルが続いていないか。続く場合その語は盤面上の実際の語ではない。 */
+function endsWord(snap: AISnapshot, dir: Direction, startR: number, startC: number, len: number): boolean {
+  const { dr, dc } = step(dir, true);
+  const r = startR + len * dr;
+  const c = startC + len * dc;
+  return !inBounds(r, c) || snap.board[r][c] === null;
+}
+
 function leftExtension(
   snap: AISnapshot,
   start: { r: number; c: number },
@@ -121,11 +134,8 @@ function recordCandidate(
       else if (prem === 'TW') mainMult *= 3;
       mainSum += letterScore;
     } else {
-      // existing letter — no premium and no blank distinction needed (blanks stored as lowercase
-      // in the snapshot mean the tile was originally blank; still 0 points)
-      const existing = snap.board[r][c];
-      const isExistingBlank = existing !== null && existing === existing.toLowerCase();
-      mainSum += isExistingBlank ? 0 : LETTER_POINTS[letter as Letter];
+      // 既存タイルはプレミアム無効
+      mainSum += charPoints(snap.board[r][c]!);
     }
   }
   let total = mainSum * mainMult;
@@ -134,11 +144,12 @@ function recordCandidate(
   const backP = step(perp, false);
   const fwdP = step(perp, true);
   for (const p of placements) {
+    // 大文字化するとブランク（小文字）の 0 点情報が失われるため、生の文字のまま集める
     let prefix = '';
     let r0 = p.r + backP.dr;
     let c0 = p.c + backP.dc;
     while (inBounds(r0, c0) && snap.board[r0][c0] !== null) {
-      prefix = snap.board[r0][c0]!.toUpperCase() + prefix;
+      prefix = snap.board[r0][c0]! + prefix;
       r0 += backP.dr;
       c0 += backP.dc;
     }
@@ -146,14 +157,14 @@ function recordCandidate(
     let r1 = p.r + fwdP.dr;
     let c1 = p.c + fwdP.dc;
     while (inBounds(r1, c1) && snap.board[r1][c1] !== null) {
-      suffix += snap.board[r1][c1]!.toUpperCase();
+      suffix += snap.board[r1][c1]!;
       r1 += fwdP.dr;
       c1 += fwdP.dc;
     }
     if (prefix.length === 0 && suffix.length === 0) continue;
     let crossSum = 0;
     let crossMult = 1;
-    for (const ch of prefix) crossSum += LETTER_POINTS[ch as Letter];
+    for (const ch of prefix) crossSum += charPoints(ch);
     const base = p.fromBlank ? 0 : LETTER_POINTS[p.letter];
     const prem = PREMIUM_BOARD[p.r][p.c];
     let letterScore = base;
@@ -162,7 +173,7 @@ function recordCandidate(
     else if (prem === 'DW' || prem === 'STAR') crossMult *= 2;
     else if (prem === 'TW') crossMult *= 3;
     crossSum += letterScore;
-    for (const ch of suffix) crossSum += LETTER_POINTS[ch as Letter];
+    for (const ch of suffix) crossSum += charPoints(ch);
     total += crossSum * crossMult;
   }
 
@@ -193,7 +204,8 @@ function extendForward(
     const ch = snap.board[curR][curC]!.toUpperCase();
     const newPrefix = prefix + ch;
     if (!hasPrefix(dict, newPrefix)) return;
-    if (placementsSoFar.length > 0 && isValidWord(dict, newPrefix)) {
+    if (placementsSoFar.length > 0 && isValidWord(dict, newPrefix)
+        && endsWord(snap, dir, startR, startC, newPrefix.length)) {
       const touchesAnchor = placementsSoFar.some(p => p.r === anchor.r && p.c === anchor.c);
       if (touchesAnchor) {
         recordCandidate(snap, dir, startR, startC, newPrefix, placementsSoFar, results);
@@ -226,7 +238,8 @@ function extendForward(
       newRack.splice(i, 1);
       const newPlacements = [...placementsSoFar, newPlacement];
       const touchesAnchor = newPlacements.some(p => p.r === anchor.r && p.c === anchor.c);
-      if (touchesAnchor && isValidWord(dict, newPrefix)) {
+      if (touchesAnchor && isValidWord(dict, newPrefix)
+          && endsWord(snap, dir, startR, startC, newPrefix.length)) {
         recordCandidate(snap, dir, startR, startC, newPrefix, newPlacements, results);
       }
       extendForward(snap, dict, dir, anchor, startR, startC, newPrefix, newRack, newPlacements, results);
@@ -234,15 +247,38 @@ function extendForward(
   }
 }
 
+function isAnchorCell(snap: AISnapshot, r: number, c: number): boolean {
+  const neighbours: [number, number][] = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
+  return neighbours.some(([nr, nc]) => snap.board[nr]?.[nc] != null);
+}
+
 export function generateMovesAt(
   anchor: { r: number; c: number },
   dir: Direction,
   snap: AISnapshot,
   dict: Dictionary,
+  deadline?: number,
 ): GeneratedMove[] {
   const results: GeneratedMove[] = [];
   const { prefix, startR, startC } = leftExtension(snap, anchor, dir);
   extendForward(snap, dict, dir, anchor, startR, startC, prefix, snap.rack, [], results);
+
+  // 既存タイルが直前に無い場合、アンカーより手前の空マスからも語を始める
+  // （既存タイルの左・上へ延ばす手はここでしか見つからない）
+  if (prefix.length === 0) {
+    const { dr, dc } = step(dir, false);
+    const maxOffset = Math.min(snap.rack.length - 1, 6);
+    for (let k = 1; k <= maxOffset; k++) {
+      const r = anchor.r + k * dr;
+      const c = anchor.c + k * dc;
+      if (!inBounds(r, c) || snap.board[r][c] !== null) break;
+      // そのマス自体がアンカーなら、そこを起点とする探索で生成されるので任せる
+      if (isAnchorCell(snap, r, c)) break;
+      // eslint-disable-next-line no-undef
+      if (deadline !== undefined && performance.now() > deadline) break;
+      extendForward(snap, dict, dir, anchor, r, c, '', snap.rack, [], results);
+    }
+  }
   return results;
 }
 
@@ -264,7 +300,7 @@ export function searchAllMoves(
     for (const dir of ['H', 'V'] as const) {
       // eslint-disable-next-line no-undef
       if (performance.now() > deadline) break outer;
-      const moves = generateMovesAt(anchor, dir, snap, dict);
+      const moves = generateMovesAt(anchor, dir, snap, dict, deadline);
       results.push(...moves);
     }
   }
