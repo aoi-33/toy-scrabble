@@ -25,4 +25,9 @@ describe('<BlankLetterModal>', () => {
     render(<BlankLetterModal onSelect={() => {}} onCancel={() => {}} />);
     expect(screen.getByRole('button', { name: 'キャンセル' }).className).toContain('min-h-[44px]');
   });
+
+  it('ボトムシートとして表示される', () => {
+    render(<BlankLetterModal onSelect={() => {}} onCancel={() => {}} />);
+    expect(screen.getByRole('dialog', { name: 'Blank タイルの文字を選択' })).toBeInTheDocument();
+  });
 });

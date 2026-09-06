@@ -33,4 +33,9 @@ describe('<ExchangeModal>', () => {
     fireEvent.click(screen.getByRole('button', { name: /キャンセル/ }));
     expect(onCancel).toHaveBeenCalled();
   });
+
+  it('ボトムシートとして表示される', () => {
+    render(<ExchangeModal rack={rack} onConfirm={() => {}} onCancel={() => {}} />);
+    expect(screen.getByRole('dialog', { name: '交換するタイルを選択' })).toBeInTheDocument();
+  });
 });
