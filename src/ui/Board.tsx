@@ -37,7 +37,7 @@ function DroppableCell({
       ref={setNodeRef}
       role="gridcell"
       aria-label={`cell-${r}-${c}`}
-      className={`w-[var(--cell-size)] h-[var(--cell-size)] shrink-0 flex items-center justify-center text-[calc(var(--cell-size)*0.22)] font-pixel ${cellClassName} ${isOver ? 'ring-2 ring-yellow-400' : ''}`}
+      className={`w-[var(--cell-size)] h-[var(--cell-size)] flex items-center justify-center text-[max(7px,calc(var(--cell-size)*0.22))] font-pixel ${cellClassName} ${isOver ? 'ring-2 ring-yellow-400' : ''}`}
       onClick={onClick}
     >
       {children}
@@ -65,7 +65,9 @@ export function Board({
     <div
       role="grid"
       className="inline-grid shrink-0 gap-px bg-board-bg p-1"
-      style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
+      // minmax(0, 1fr) だと横スクロールコンテナに入れたときトラックだけが縮み、
+      // セルがトラックからはみ出す。トラック幅をセルサイズに固定する。
+      style={{ gridTemplateColumns: 'repeat(15, var(--cell-size))' }}
     >
       {board.flatMap((row, r) =>
         row.map((cell, c) => {

@@ -41,6 +41,15 @@ async function buildProbeCss(): Promise<string> {
   return result.css;
 }
 
+// 指定した @media クエリのブロックだけを切り出す。単純な indexOf からの slice だと
+// 後続の @media まで範囲に含まれ、別のブロックの宣言を拾って false pass する。
+function mediaBlock(source: string, query: string): string {
+  const start = source.indexOf(query);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const next = source.indexOf('@media', start + query.length);
+  return next === -1 ? source.slice(start) : source.slice(start, next);
+}
+
 let css = '';
 let probeCss = '';
 beforeAll(async () => {
@@ -69,7 +78,13 @@ describe('Tailwind ブレークポイント', () => {
 
 describe('セルサイズの CSS 変数', () => {
   it('モバイルでは 92vw を 15 分割し、下限 20px を保証する', () => {
-    expect(css).toMatch(/--cell-size:\s*max\(20px,\s*calc\(\(92vw - 22px\)\s*\/\s*15\)\)/);
+    expect(css).toMatch(/--cell-size:\s*max\(20px,\s*min\(calc\(\(92vw - 22px\)\s*\/\s*15\)/);
+  });
+
+  it('横向きで盤面が縦に溢れないよう高さ側にも上限を設ける', () => {
+    // 幅だけを見ると 667x375 で cell 39px → 盤面 613px となり画面高さを超える。
+    // vh ではなくアドレスバーを除いた dvh で抑える。
+    expect(css).toMatch(/min\(calc\(\(92vw - 22px\)\s*\/\s*15\),\s*calc\(\(70dvh - 22px\)\s*\/\s*15\)\)/);
   });
 
   it('手札タイルは 44px を下回らない', () => {
@@ -77,9 +92,8 @@ describe('セルサイズの CSS 変数', () => {
   });
 
   it('PC(769px〜) では --cell-size を固定値に切り替える', () => {
-    expect(css).toContain('@media (min-width: 769px)');
     // 769px ブロック内で --cell-size が 36px に上書きされていること
-    const pcBlock = css.slice(css.indexOf('@media (min-width: 769px)'));
+    const pcBlock = mediaBlock(css, '@media (min-width: 769px)');
     expect(pcBlock).toMatch(/--cell-size:\s*36px/);
   });
 });
@@ -92,7 +106,14 @@ describe('タイルと盤面セルのサイズ', () => {
 
   it('文字サイズもセルサイズに追従する', () => {
     // Tailwind は calc 内の演算子まわりに空白を補って出力する
-    expect(css).toContain('font-size: calc(var(--cell-size) * 0.5)');
+    expect(css).toContain('font-size: max(12px, calc(var(--cell-size) * 0.5))');
+  });
+
+  it('小さい画面でも文字が潰れないよう下限を持つ', () => {
+    // 375px 端末では cell が 21.5px まで縮む。下限が無いと盤面のプレミアム表記が
+    // 4.7px になり、font-pixel では判読できなくなる。
+    expect(css).toContain('font-size: max(7px, calc(var(--cell-size) * 0.22))');
+    expect(css).not.toContain('font-size: calc(var(--cell-size) * 0.22)');
   });
 
   it('固定サイズのブレークポイント別クラスはもう使われていない', () => {

@@ -6,8 +6,11 @@
 
 :root {
   /* 盤面の外形幅 = 15*cell + gap(1px*14) + padding(4px*2) = 15*cell + 22px。
-     これを viewport 幅の 92% に収める。極小画面でも 20px は確保する（design.md §5.1）。 */
-  --cell-size: max(20px, calc((92vw - 22px) / 15));
+     盤面は正方形なので外形高さも同じ式になる。幅だけを見て 92vw に収めると、
+     横向き（667x375 など）で高さが画面をはるかに超える（cell 39px → 盤面 613px）。
+     そこで高さ側も 70dvh で抑える。dvh はアドレスバーを除いた実際の高さ。
+     極小画面でも 20px は確保する（design.md §5.1）。 */
+  --cell-size: max(20px, min(calc((92vw - 22px) / 15), calc((70dvh - 22px) / 15)));
   /* 手札タイルはタッチターゲット 44×44px を満たす必要がある（WCAG 2.5.5） */
   --rack-tile-size: max(44px, var(--cell-size));
 }

@@ -19,11 +19,11 @@ export function Tile({ tile, variant }: { tile: TileType; variant: TileVariant }
   const showPoints = tile.kind === 'letter';
   return (
     <div
-      className={`relative w-[var(--cell-size)] h-[var(--cell-size)] text-[calc(var(--cell-size)*0.5)] flex items-center justify-center font-bold select-none ${VARIANT_CLASSES[variant]}`}
+      className={`relative w-[var(--cell-size)] h-[var(--cell-size)] text-[max(12px,calc(var(--cell-size)*0.5))] flex items-center justify-center font-bold select-none ${VARIANT_CLASSES[variant]}`}
     >
       <span>{displayLetter}</span>
       {showPoints && (
-        <span className="absolute bottom-0 right-0.5 text-[calc(var(--cell-size)*0.22)] font-normal">
+        <span className="absolute bottom-0 right-0.5 text-[max(7px,calc(var(--cell-size)*0.22))] font-normal">
           {tile.points}
         </span>
       )}
