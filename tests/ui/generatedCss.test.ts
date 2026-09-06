@@ -84,6 +84,18 @@ describe('セルサイズの CSS 変数', () => {
   });
 });
 
+describe('タイルと盤面セルのサイズ', () => {
+  it('--cell-size を width/height に使うユーティリティが生成される', () => {
+    expect(css).toContain('width: var(--cell-size)');
+    expect(css).toContain('height: var(--cell-size)');
+  });
+
+  it('文字サイズもセルサイズに追従する', () => {
+    // Tailwind は calc 内の演算子まわりに空白を補って出力する
+    expect(css).toContain('font-size: calc(var(--cell-size) * 0.5)');
+  });
+});
+
 describe('viewport メタ', () => {
   // new URL(..., import.meta.url) は jsdom 環境で "The URL must be of scheme file"
   // になるため使わない。vitest の cwd はプロジェクトルートなので相対パスで読む。
