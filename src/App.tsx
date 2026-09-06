@@ -13,6 +13,7 @@ import { seededRng } from './game/bag';
 import { useAiWorker } from './ai/useAiWorker';
 import { boardToSnapshot, rackToSnapshot } from './ai/snapshot';
 import type { Difficulty } from './ai/types';
+import { useDndSensors } from './ui/dndSensors';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
@@ -21,6 +22,7 @@ function GameShell() {
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
+  const sensors = useDndSensors();
 
   // ワーカーは dispatch 前に ready へ戻るため、手番キーで二重依頼と遅延結果の誤適用を防ぐ
   const turnKey = `${state.status}:${state.turn}:${state.currentPlayerIndex}`;
@@ -187,7 +189,7 @@ function GameShell() {
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="p-4 flex flex-col items-center gap-3">
         <h1 className="font-pixel text-xl">Toy Scrabble</h1>
         <ScorePanel
