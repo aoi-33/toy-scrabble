@@ -21,4 +21,12 @@ describe('<Board>', () => {
     render(<Board board={b} pending={[]} onCellClick={() => {}} />);
     expect(screen.getByText('A')).toBeInTheDocument();
   });
+
+  it('セルのサイズを --cell-size から取る', () => {
+    render(<Board board={createEmptyBoard()} pending={[]} onCellClick={() => {}} />);
+    const cell = screen.getByLabelText('cell-0-0');
+    expect(cell.className).toContain('w-[var(--cell-size)]');
+    expect(cell.className).toContain('h-[var(--cell-size)]');
+    expect(cell.className).not.toMatch(/\bw-8\b|\bsm:w-9\b/);
+  });
 });

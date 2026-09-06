@@ -37,7 +37,7 @@ function DroppableCell({
       ref={setNodeRef}
       role="gridcell"
       aria-label={`cell-${r}-${c}`}
-      className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[8px] font-pixel ${cellClassName} ${isOver ? 'ring-2 ring-yellow-400' : ''}`}
+      className={`w-[var(--cell-size)] h-[var(--cell-size)] shrink-0 flex items-center justify-center text-[calc(var(--cell-size)*0.22)] font-pixel ${cellClassName} ${isOver ? 'ring-2 ring-yellow-400' : ''}`}
       onClick={onClick}
     >
       {children}
@@ -64,7 +64,7 @@ export function Board({
   return (
     <div
       role="grid"
-      className="inline-grid gap-px bg-board-bg p-1"
+      className="inline-grid shrink-0 gap-px bg-board-bg p-1"
       style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
     >
       {board.flatMap((row, r) =>
