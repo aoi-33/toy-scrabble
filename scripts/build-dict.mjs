@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// word-list npm パッケージから TWL06 相当の英単語リストを public/dict/twl06.txt に書き出す
+// word-list npm パッケージ（CC0 の Letterpress Word List）から英単語リストを
+// public/dict/words.txt に書き出す
 // 実行: npm run build:dict
 // 出力ファイルは .gitignore で除外（生成物のため）
 
@@ -12,7 +13,7 @@ const rootDir = resolve(__dirname, '..');
 
 const srcPath = resolve(rootDir, 'node_modules/word-list/words.txt');
 const outDir = resolve(rootDir, 'public/dict');
-const outPath = resolve(outDir, 'twl06.txt');
+const outPath = resolve(outDir, 'words.txt');
 
 const raw = readFileSync(srcPath, 'utf8');
 const upper = raw

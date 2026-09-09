@@ -8,6 +8,7 @@ import { ActionBar } from './ui/ActionBar';
 import { BlankLetterModal } from './ui/BlankLetterModal';
 import { ExchangeModal } from './ui/ExchangeModal';
 import { ModeSelect } from './ui/ModeSelect';
+import { AboutSheet } from './ui/AboutSheet';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
 import { useAiWorker } from './ai/useAiWorker';
@@ -21,7 +22,7 @@ import { MoveWords } from './ui/WordChip';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
-  const dictUrl = dict ? `${import.meta.env.BASE_URL}dict/twl06.txt` : null;
+  const dictUrl = dict ? `${import.meta.env.BASE_URL}dict/words.txt` : null;
   const ai = useAiWorker(dictUrl);
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
@@ -29,6 +30,7 @@ function GameShell() {
   // 辞書ローダはバケットのキャッシュを持つので 1 回だけ作る
   const dictLoader = useMemo(() => createDictLoader(), []);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
   const sensors = useDndSensors();
   // キーボードショートカットは PC のみ（design.md §5.6）
   const isDesktop = useMediaQuery('(min-width: 769px)');
@@ -109,7 +111,8 @@ function GameShell() {
     state.status === 'playing' &&
     (state.mode === 'free' || state.players[state.currentPlayerIndex].id !== 'COM');
   // シート表示中はショートカットを止める。Escape は Sheet 側が「閉じる」に使う
-  const isSheetOpen = pendingBlank !== null || showExchange || selectedWord !== null;
+  const isSheetOpen =
+    pendingBlank !== null || showExchange || selectedWord !== null || showAbout;
 
   useEffect(() => {
     if (!isDesktop || !isHumanTurn || isSheetOpen) return;
@@ -152,6 +155,14 @@ function GameShell() {
             辞書を読み込んでいます (約 2.7MB)…
           </p>
         )}
+        <button
+          type="button"
+          onClick={() => setShowAbout(true)}
+          className="font-pixel text-[10px] text-stone-400 hover:text-stone-200 min-h-[44px] px-3"
+        >
+          ABOUT
+        </button>
+        {showAbout && <AboutSheet onDismiss={() => setShowAbout(false)} />}
       </div>
     );
   }

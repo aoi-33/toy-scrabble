@@ -45,7 +45,7 @@ const irregularVerbs = parseIrregularVerbs(
   JSON.parse(readFileSync(resolve(ejdictDir, 'irregular_verbs.json'), 'utf8')),
 );
 
-const words = readFileSync(resolve(rootDir, 'public/dict/twl06.txt'), 'utf8').split(/\r?\n/);
+const words = readFileSync(resolve(rootDir, 'public/dict/words.txt'), 'utf8').split(/\r?\n/);
 const buckets = buildBuckets({ words, index, data, japanese, irregularVerbs, knownLemmas });
 
 mkdirSync(outDir, { recursive: true });

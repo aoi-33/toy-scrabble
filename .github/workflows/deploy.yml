@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test
-      # prebuild が word-list から public/dict/twl06.txt を生成する
+      # prebuild が word-list から public/dict/words.txt を生成する
       - run: npm run build
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

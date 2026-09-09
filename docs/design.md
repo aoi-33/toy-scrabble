@@ -41,7 +41,7 @@ scrabble/
 ├── index.html
 ├── public/
 │   └── dict/                     # 静的辞書アセット（.gitignore 対象、npm run build:dict で生成）
-│       ├── twl06.txt
+│       ├── words.txt
 │       ├── en-en/
 │       │   ├── manifest.json
 │       │   ├── a.json
@@ -387,12 +387,12 @@ Play ボタン押下で違反時、盤面下に赤バナーで理由を 3 秒表
 生辞書はリポジトリに含めず、`npm run build:dict` で `public/dict/` を生成（`.gitignore` 対象）。
 
 **入力:**
-- `scripts/dict-sources/twl06.txt`（scrabblewords リポジトリ等）
-- `scripts/dict-sources/wordnet-3.1/`（Princeton WordNet）
-- `scripts/dict-sources/ejdict-hand.sqlite`（kujirahand/EJDict）
+- `node_modules/word-list/words.txt`（CC0 の Letterpress Word List）
+- `node_modules/wordnet-db/`（Princeton WordNet）
+- `node_modules/ejdict/`（kujirahand/EJDict 由来）
 
 **出力:**
-- `public/dict/twl06.txt`（そのままコピー）
+- `public/dict/words.txt`（大文字化してコピー）
 - `public/dict/en-en/{a..z}.json` + `manifest.json`
 - `public/dict/en-ja/{a..z}.json` + `manifest.json`
 
@@ -486,13 +486,17 @@ E2E は PR 時に別ジョブで実行（デプロイをブロックしない）
 
 | 資産 | ソース | ライセンス |
 |---|---|---|
-| TWL06 word list | `scrabblewords/wordlists` (GitHub) | 公開リスト（アプリ配布可、詳細は README で明示） |
-| WordNet 3.1 | Princeton University | WordNet License（表示要件あり） |
-| ejdict-hand | `kujirahand/EJDict` | パブリックドメイン |
-| Press Start 2P フォント | Google Fonts | SIL Open Font License |
+| 英単語リスト (274,137 語) | npm `word-list` → `atebits/Words`（Letterpress Word List） | パッケージは MIT、元データは CC0-1.0 |
+| WordNet 3.1 | npm `wordnet-db`（Princeton University） | WordNet License（著作権表示と免責を全コピーに添付する義務あり） |
+| ejdict | npm `ejdict` → `kujirahand/EJDict` | MIT（元データはパブリックドメイン） |
+| Press Start 2P フォント | Google Fonts（CDN 参照、自己ホストはしない） | SIL Open Font License 1.1 |
 | `@dnd-kit/core` | npm | MIT |
 
+**TWL06 / NWL は使っていない。** これらは NASPA の専有物でライセンス契約が必要なため採用不可。
+単語リストは CC0 なので GitHub Pages での再配布に制約がない。
+
 各ライセンス表示は `README.md` および画面内 About モーダルに明記。
+WordNet のみ「ALL copies に著作権表示と免責を添付」が明示的な義務であり、他は謝辞に留まる。
 
 ---
 

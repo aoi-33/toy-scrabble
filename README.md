@@ -9,7 +9,7 @@
 1. ホーム画面で `FREE PLAY` / `COM EASY` / `COM MEDIUM` / `COM HARD` から選択してゲーム開始
 2. COM 対戦時、相手の手番中は "🤖 COM 思考中…" が表示され、Rack と ActionBar がロックされます
 3. 手札のタイルをクリック → 空マスをクリック、または手札をドラッグしてマスに置く
-4. すべてのタイルを置いたら `PLAY` を押す（辞書 = TWL06 サンプルで検証）
+4. すべてのタイルを置いたら `PLAY` を押す（274,137 語の英単語リストで検証）
 5. `RECALL` で全ての pending タイルを手札に戻す
 6. `EXCHANGE` で手札の一部を袋のタイルと入れ替える（袋残 7 枚以上のとき）
 7. `PASS` でターンをスキップ（6 連続で終了）
@@ -32,12 +32,9 @@ npm run dev        # http://localhost:5173/toy-scrabble/
 npm run test       # unit + component (Vitest)
 ```
 
-## Plan 1 の制限事項
-
-- 辞書は `public/dict/twl06.sample.txt`（サンプル数十語）のみ。フル TWL06（18 万語）は Plan 3 で導入
-
 ## 変更履歴
 
+- **2026-09-10** 外部データソースのライセンス表記を README と画面内 About モーダルに追加。あわせて辞書ファイルを実態に合わせ `twl06.txt` → `words.txt` に改名（中身は TWL06 ではなく CC0 の単語リスト）。
 - **2026-09-09** Plan 3 完了: 履歴の単語から英英・英和辞書を引けるようにした。定義は WordNet 3.1 と ejdict からビルド時に生成し（120,435 語 / 計 9.8 MB）、先頭文字ごとの JSON を遅延読み込みする。
 - **2026-09-07** Plan 4 完了: モバイル対応（レスポンシブ盤面・タッチドラッグ・ボトムシート）と GitHub Pages 自動デプロイを追加。
 - **2026-09-06** Plan 2 完了: COM 対戦 (Easy / Medium / Hard) を追加。AI は Web Worker で動作、思考時間 ≤ 1s。
@@ -61,7 +58,7 @@ npm run test       # unit + component (Vitest)
 
 **3 は初回 push より前に済ませてください。** 未設定のまま push すると deploy ジョブが `Get Pages site failed` で失敗します。
 
-辞書ファイル `public/dict/twl06.txt` は `.gitignore` 済みですが、`prebuild` が npm の `word-list` パッケージから毎回生成するため CI でも同じものが作られます。
+辞書ファイル `public/dict/words.txt` は `.gitignore` 済みですが、`prebuild` が npm の `word-list` パッケージから毎回生成するため CI でも同じものが作られます。
 
 定義ファイル `public/dict/defs/{a..z}.json` も `.gitignore` 済みですが、同じく `prebuild` が `wordnet-db` と `ejdict` から毎回生成します。
 
@@ -72,4 +69,43 @@ npm run test       # unit + component (Vitest)
 
 ## ライセンス
 
-MIT
+このリポジトリのソースコードは MIT ライセンスです。
+
+配信物には以下の外部データが含まれます。画面内の `ABOUT` ボタンからも同じ内容を確認できます。
+
+| 資産 | ソース | ライセンス |
+|---|---|---|
+| 英単語リスト (274,137 語) | npm [`word-list`](https://www.npmjs.com/package/word-list) → [atebits/Words](https://github.com/atebits/Words) | パッケージは MIT、元データは CC0-1.0 |
+| 英英定義 (WordNet 3.1) | npm [`wordnet-db`](https://www.npmjs.com/package/wordnet-db)（Princeton University） | WordNet License（下記） |
+| 和訳 (EJDict) | npm [`ejdict`](https://www.npmjs.com/package/ejdict) → [kujirahand/EJDict](https://github.com/kujirahand/EJDict) | MIT（元データはパブリックドメイン） |
+| Press Start 2P フォント | Google Fonts（CDN 参照） | SIL Open Font License 1.1 |
+| `@dnd-kit/core`, `@dnd-kit/utilities` | npm | MIT |
+
+**単語リストは TWL06 / NWL ではありません。** これらは NASPA の専有物でライセンス契約が必要なため使用していません。
+本アプリの単語リストは CC0-1.0 の Letterpress Word List で、再配布に制約はありません。
+
+### WordNet License
+
+WordNet ライセンスは、著作権表示と免責を**すべての複製に添付すること**を配布の条件としています。
+以下は `node_modules/wordnet-db/LICENSE` からの原文です。
+
+```
+WordNet 3.0 Copyright 2006 by Princeton University.  All rights reserved.
+
+THIS SOFTWARE AND DATABASE IS PROVIDED "AS IS" AND PRINCETON
+UNIVERSITY MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PRINCETON
+UNIVERSITY MAKES NO REPRESENTATIONS OR WARRANTIES OF MERCHANT-
+ABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE
+OF THE LICENSED SOFTWARE, DATABASE OR DOCUMENTATION WILL NOT
+INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR
+OTHER RIGHTS.
+
+The name of Princeton University or Princeton may not be used in
+advertising or publicity pertaining to distribution of the software
+and/or database.  Title to copyright in this software, database and
+any associated documentation shall at all times remain with
+Princeton University and LICENSEE agrees to preserve same.
+```
+
+本アプリは Princeton University とは無関係であり、同大学から推奨・承認を受けたものではありません。

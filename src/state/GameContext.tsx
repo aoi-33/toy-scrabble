@@ -21,7 +21,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}dict/twl06.txt`);
+      const res = await fetch(`${import.meta.env.BASE_URL}dict/words.txt`);
       const text = await res.text();
       setDict(createDictionaryFromText(text));
     })();
