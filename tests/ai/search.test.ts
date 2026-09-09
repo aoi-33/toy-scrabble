@@ -140,10 +140,8 @@ describe('searchAllMoves', () => {
       bagRemaining: 86,
       isFirstMove: true,
     };
-    // eslint-disable-next-line no-undef
     const start = performance.now();
     const moves = searchAllMoves(snap, dict, { deadlineMs: 1 });
-    // eslint-disable-next-line no-undef
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(200);
     expect(Array.isArray(moves)).toBe(true);

@@ -25,7 +25,6 @@ describe('COM の手番', () => {
   beforeEach(() => {
     requestMove.mockReset();
     requestMove.mockImplementation(
-      // eslint-disable-next-line no-undef
       () => new Promise(resolve => setTimeout(() => resolve({ kind: 'pass' }), 10)),
     );
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ text: async () => 'CAT\nDOG\n' }));
@@ -51,7 +50,6 @@ describe('COM の手番', () => {
 
     await waitFor(() => expect(requestMove).toHaveBeenCalledTimes(1));
     // COM の手が確定した後も再依頼が走らないこと（走ると COM が P1 の手番も打ち続ける）
-    // eslint-disable-next-line no-undef
     await act(() => new Promise(resolve => setTimeout(resolve, 1200)));
     expect(requestMove).toHaveBeenCalledTimes(1);
   });

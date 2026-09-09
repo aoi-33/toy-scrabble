@@ -274,7 +274,6 @@ export function generateMovesAt(
       if (!inBounds(r, c) || snap.board[r][c] !== null) break;
       // そのマス自体がアンカーなら、そこを起点とする探索で生成されるので任せる
       if (isAnchorCell(snap, r, c)) break;
-      // eslint-disable-next-line no-undef
       if (deadline !== undefined && performance.now() > deadline) break;
       extendForward(snap, dict, dir, anchor, r, c, '', snap.rack, [], results);
     }
@@ -288,7 +287,6 @@ export function searchAllMoves(
   opts: { deadlineMs: number },
 ): GeneratedMove[] {
   const results: GeneratedMove[] = [];
-  // eslint-disable-next-line no-undef
   const deadline = performance.now() + opts.deadlineMs;
   const anchors = findAnchors(snap);
   const orderedAnchors = anchors
@@ -298,7 +296,6 @@ export function searchAllMoves(
 
   outer: for (const anchor of orderedAnchors) {
     for (const dir of ['H', 'V'] as const) {
-      // eslint-disable-next-line no-undef
       if (performance.now() > deadline) break outer;
       const moves = generateMovesAt(anchor, dir, snap, dict, deadline);
       results.push(...moves);

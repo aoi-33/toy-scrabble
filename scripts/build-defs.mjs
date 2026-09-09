@@ -56,11 +56,9 @@ for (const letter of LETTERS) {
   const json = JSON.stringify(bucket);
   writeFileSync(resolve(outDir, `${letter}.json`), json, 'utf8');
   totalEntries += Object.keys(bucket).length;
-  // eslint-disable-next-line no-undef
   totalBytes += Buffer.byteLength(json);
 }
 
-// eslint-disable-next-line no-undef
 console.log(
   `✓ wrote ${totalEntries.toLocaleString()} entries (${(totalBytes / 1e6).toFixed(1)} MB) to ${outDir}`,
 );

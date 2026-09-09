@@ -15,7 +15,6 @@ function resolveEntry(bucket: Bucket, entry: Definition): Definition | null {
 }
 
 export function createDictLoader(
-  // eslint-disable-next-line no-undef
   fetchImpl: FetchLike = url => fetch(url),
 ): DictLoader {
   const cache = new Map<string, Bucket>();

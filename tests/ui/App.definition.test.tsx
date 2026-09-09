@@ -41,7 +41,6 @@ describe('App の辞書表示', () => {
 
   it('辞書バケットを取りに行かない（単語をタップするまで fetch しない）', async () => {
     await startFreePlay();
-    // eslint-disable-next-line no-undef
     const calls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
     // mock.calls の要素は any[] なのでタプル分解は strict で通らない。先頭要素を直接見る
     expect(calls.every((call: unknown[]) => !String(call[0]).includes('dict/defs/'))).toBe(true);

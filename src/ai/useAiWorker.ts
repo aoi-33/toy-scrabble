@@ -5,7 +5,6 @@ import type { Move } from '../game/types';
 type State = 'uninitialized' | 'ready' | 'thinking';
 
 export function useAiWorker(dictUrl: string | null) {
-  // eslint-disable-next-line no-undef
   const workerRef = useRef<Worker | null>(null);
   const [state, setState] = useState<State>('uninitialized');
   const pendingRef = useRef<Map<number, (move: Move) => void>>(new Map());
@@ -14,10 +13,8 @@ export function useAiWorker(dictUrl: string | null) {
   useEffect(() => {
     if (!dictUrl) return;
     const pending = pendingRef.current;
-    // eslint-disable-next-line no-undef
     const w = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
     workerRef.current = w;
-    // eslint-disable-next-line no-undef
     w.onmessage = (evt: MessageEvent<WorkerResponse>) => {
       const msg = evt.data;
       if (msg.type === 'READY') {
@@ -31,7 +28,6 @@ export function useAiWorker(dictUrl: string | null) {
         }
       } else if (msg.type === 'ERROR') {
         setState('ready');
-        // eslint-disable-next-line no-undef
         console.error('AI Worker error:', msg.message);
       }
     };

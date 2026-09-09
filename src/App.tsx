@@ -63,13 +63,10 @@ function GameShell() {
       bagRemaining: state.bag.length,
       isFirstMove: state.board.flat().every(c => c === null),
     };
-    // eslint-disable-next-line no-undef
     console.log(`[AI] request move, difficulty=${difficulty}, rack=${rack.map(t => t.kind === 'letter' ? t.letter : '*').join('')}`);
     // 「思考中」インジケータを最低 500ms は見せる
-    // eslint-disable-next-line no-undef
     const minDelay = new Promise(resolve => setTimeout(resolve, 500));
     Promise.all([ai.requestMove(snap, difficulty), minDelay]).then(([move]) => {
-      // eslint-disable-next-line no-undef
       console.log('[AI] chose move:', move);
       if (currentTurnKeyRef.current !== turnKey) return;
       if (move.kind === 'pass') {
@@ -80,7 +77,6 @@ function GameShell() {
         dispatch({ type: 'COMMIT_AI_PLAY', placements: move.placements, dict });
       }
     }).catch(err => {
-      // eslint-disable-next-line no-undef
       console.error('[AI] move failed, passing:', err);
       if (currentTurnKeyRef.current !== turnKey) return;
       dispatch({ type: 'PASS' });
@@ -102,9 +98,7 @@ function GameShell() {
       text = `🤖 COM: EXCHANGE (${last.move.tileIndices.length} 枚)`;
     }
     setComToast(text);
-    // eslint-disable-next-line no-undef
     const t = setTimeout(() => setComToast(null), 3500);
-    // eslint-disable-next-line no-undef
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.history.length]);
@@ -120,14 +114,12 @@ function GameShell() {
   useEffect(() => {
     if (!isDesktop || !isHumanTurn || isSheetOpen) return;
 
-    // eslint-disable-next-line no-undef
     function onKeyDown(e: KeyboardEvent) {
       // 押しっぱなしの連射と、ブラウザ標準ショートカットの横取りを避ける
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (e.key === 'Enter') {
         // ボタンや入力欄にフォーカスがある Enter は、その要素の操作が本来の意味
-        // eslint-disable-next-line no-undef
         const tag = document.activeElement?.tagName;
         if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         if (!canPlay || !dict) return;
@@ -140,9 +132,7 @@ function GameShell() {
       }
     }
 
-    // eslint-disable-next-line no-undef
     window.addEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line no-undef
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isDesktop, isHumanTurn, isSheetOpen, canPlay, dict, dispatch]);
 
@@ -348,7 +338,6 @@ function GameShell() {
               onRecall={() => dispatch({ type: 'RECALL_ALL' })}
               onShuffle={() => dispatch({ type: 'SHUFFLE_RACK', rng: seededRng(Date.now()) })}
               onPass={() => {
-                // eslint-disable-next-line no-undef
                 if (confirm('本当に PASS しますか？')) dispatch({ type: 'PASS' });
               }}
               onExchange={() => setShowExchange(true)}

@@ -25,5 +25,4 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(outPath, upper + '\n', 'utf8');
 
 const lineCount = upper.split('\n').length;
-// eslint-disable-next-line no-undef
 console.log(`✓ wrote ${lineCount.toLocaleString()} words to ${outPath}`);

@@ -10,7 +10,6 @@ import type { Letter, Move, PendingPlacement, Tile } from '../game/types';
 // tsconfig.app.json's DOM lib (which does not include webworker lib).
 type WorkerCtx = {
   onmessage:
-    // eslint-disable-next-line no-undef
     | ((evt: MessageEvent<WorkerRequest>) => void)
     | null;
   postMessage: (msg: WorkerResponse) => void;
@@ -18,15 +17,12 @@ type WorkerCtx = {
 
 let dict: Dictionary | null = null;
 
-// eslint-disable-next-line no-undef
 const ctx: WorkerCtx = self as unknown as WorkerCtx;
 
-// eslint-disable-next-line no-undef
 ctx.onmessage = async (evt: MessageEvent<WorkerRequest>) => {
   const msg = evt.data;
   try {
     if (msg.type === 'INIT') {
-      // eslint-disable-next-line no-undef
       const res = await fetch(msg.dictUrl);
       const text = await res.text();
       dict = createDictionaryFromText(text);

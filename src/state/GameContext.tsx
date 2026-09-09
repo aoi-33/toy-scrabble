@@ -21,7 +21,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      // eslint-disable-next-line no-undef
       const res = await fetch(`${import.meta.env.BASE_URL}dict/twl06.txt`);
       const text = await res.text();
       setDict(createDictionaryFromText(text));

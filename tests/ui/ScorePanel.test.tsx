@@ -20,7 +20,6 @@ describe('<ScorePanel>', () => {
     const { container } = render(
       <ScorePanel p1Score={0} comScore={0} bagRemaining={100} currentPlayerId="P1" />,
     );
-    // eslint-disable-next-line no-undef
     expect((container.firstElementChild as HTMLElement).className).toContain('w-full');
   });
 });

@@ -26,7 +26,6 @@ export function hasPrefix(dict: Dictionary, prefix: string): boolean {
 }
 
 export async function loadDictionaryFromUrl(url: string): Promise<Dictionary> {
-  // eslint-disable-next-line no-undef
   const res = await fetch(url);
   if (!res.ok) throw new Error(`dictionary fetch failed: ${res.status}`);
   const text = await res.text();

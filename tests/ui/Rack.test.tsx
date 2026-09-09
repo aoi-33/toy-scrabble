@@ -43,7 +43,6 @@ describe('<Rack>', () => {
 
   it('手札タイルには専用サイズを継承させる', () => {
     const { container } = render(<Rack rack={rack} selectedIndex={null} onSelect={() => {}} />);
-    // eslint-disable-next-line no-undef
     const inner = container.querySelector('[data-testid="rack-tiles"]') as HTMLElement;
     expect(inner.style.getPropertyValue('--cell-size')).toBe('var(--rack-tile-size)');
   });
@@ -51,7 +50,6 @@ describe('<Rack>', () => {
   it('7 枚が入り切らない幅でも横スクロールで全部触れる', () => {
     // 44px * 7 + gap 4px * 6 + padding 8px * 2 = 348px > 320px 端末の内側幅
     const { container } = render(<Rack rack={rack} selectedIndex={null} onSelect={() => {}} />);
-    // eslint-disable-next-line no-undef
     const inner = container.querySelector('[data-testid="rack-tiles"]') as HTMLElement;
     expect(inner.className).toContain('max-w-full');
     expect(inner.className).toContain('overflow-x-auto');

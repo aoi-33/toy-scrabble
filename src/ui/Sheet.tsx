@@ -14,28 +14,23 @@ export function Sheet({
   onDismiss: () => void;
   children: React.ReactNode;
 }) {
-  // eslint-disable-next-line no-undef
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Escape で閉じる。App 側の Escape ショートカット（RECALL ALL）は
   // シート表示中は無効化されるので、ここでの処理と競合しない。
   useEffect(() => {
-    // eslint-disable-next-line no-undef
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault();
         onDismiss();
       }
     }
-    // eslint-disable-next-line no-undef
     window.addEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line no-undef
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onDismiss]);
 
   // 開いたらパネルへフォーカスし、閉じたら開く前の要素へ戻す
   useEffect(() => {
-    // eslint-disable-next-line no-undef
     const previous = document.activeElement as HTMLElement | null;
     panelRef.current?.focus();
     return () => previous?.focus();

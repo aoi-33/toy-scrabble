@@ -3,7 +3,6 @@ import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 // vitest はリポジトリルートから実行される
-// eslint-disable-next-line no-undef
 const root = process.cwd();
 
 describe('辞書データパッケージ', () => {

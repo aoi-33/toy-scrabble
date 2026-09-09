@@ -44,7 +44,6 @@ describe('キーボードショートカット', () => {
     stubMatchMedia(true);
     await startAndPlaceOneTile();
     await waitFor(() => expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled());
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.getByRole('button', { name: 'RECALL' })).toBeDisabled());
   });
@@ -53,7 +52,6 @@ describe('キーボードショートカット', () => {
     stubMatchMedia(false);
     await startAndPlaceOneTile();
     await waitFor(() => expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled());
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled();
   });
@@ -62,7 +60,6 @@ describe('キーボードショートカット', () => {
     stubMatchMedia(true);
     await startAndPlaceOneTile();
     await waitFor(() => expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled());
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape', repeat: true });
     expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled();
   });
@@ -71,7 +68,6 @@ describe('キーボードショートカット', () => {
     stubMatchMedia(true);
     await startAndPlaceOneTile();
     await waitFor(() => expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled());
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape', metaKey: true });
     expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled();
   });
@@ -81,7 +77,6 @@ describe('キーボードショートカット', () => {
     await startAndPlaceOneTile();
     const shuffle = screen.getByRole('button', { name: 'SHUFFLE' });
     shuffle.focus();
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Enter' });
     // PLAY が走っていれば仮配置が確定 or エラーで pending が変化する。
     // ここでは走っていないので RECALL は有効なまま。
@@ -93,7 +88,6 @@ describe('キーボードショートカット', () => {
     await startAndPlaceOneTile();
     fireEvent.click(screen.getByRole('button', { name: 'EXCHANGE' }));
     await screen.findByRole('dialog', { name: '交換するタイルを選択' });
-    // eslint-disable-next-line no-undef
     fireEvent.keyDown(window, { key: 'Escape' });
     // Sheet が閉じる
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
