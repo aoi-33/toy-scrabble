@@ -8,6 +8,11 @@
 
 **Tech Stack:** Node ESM ビルドスクリプト（`scripts/*.mjs`）、React 18 + TypeScript strict、Tailwind、Vitest + @testing-library/react。
 
+**実行時に判明した差分（実装は以下に従っている）:**
+
+- Task 8・9 のテストコードは `@testing-library/user-event` を import しているが、このパッケージは本プロジェクトの依存に無い。依存を増やさない方針（CLAUDE.md）に従い、既存の `tests/ui/Sheet.test.tsx` と同じく `fireEvent.click` を使っている。
+- Task 10 のテストの `calls.every(([url]: [string]) => …)` は vitest では通るが `tsc -b` で落ちる（`mock.calls` の要素は `any[]` でタプル `[string]` に代入できない）。`calls.every((call: unknown[]) => …)` に書き換えた。アサーションの内容は同じ。
+
 **Spec:** `docs/superpowers/specs/2026-09-09-plan-3-dictionary-design.md`
 
 ---
@@ -83,7 +88,7 @@ spec §4.2 の例 2 件が規則と矛盾しているので、計画側の値を
 - Modify: `package.json`
 - Test: `tests/scripts/deps.test.ts`（新規）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/scripts/deps.test.ts` を新規作成:
 
@@ -112,23 +117,23 @@ describe('辞書データパッケージ', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/scripts/deps.test.ts`
 Expected: FAIL（2 件とも `expected false to be true`）
 
-- [ ] **Step 3: 依存を入れる**
+- [x] **Step 3: 依存を入れる**
 
 Run: `npm install --save-dev wordnet-db@3.1.14 ejdict@1.4.2`
 
 `wordnet-db` は展開 35MB あるのでインストールに時間がかかる。これは spec §2 で許容済み。
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/scripts/deps.test.ts`
 Expected: PASS（2 件）
 
-- [ ] **Step 5: npm スクリプトを足す**
+- [x] **Step 5: npm スクリプトを足す**
 
 `package.json` の `scripts` を編集する。`build:dict` の直後に `build:defs` を足し、`predev` / `prebuild` / `prepreview` の 3 つを、現在の `node scripts/build-dict.mjs` から次の値へ変える:
 
@@ -144,12 +149,12 @@ node scripts/build-defs.mjs
 
 `build-defs.mjs` は `public/dict/twl06.txt` を入力に使うので、`build-dict.mjs` の**後**に走らせること。この時点では `scripts/build-defs.mjs` がまだ無いため `npm run build` は失敗するが、それは Task 5 で解消する。
 
-- [ ] **Step 6: lint を通す**
+- [x] **Step 6: lint を通す**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
 
-- [ ] **Step 7: コミット**
+- [x] **Step 7: コミット**
 
 Run: `git add package.json package-lock.json tests/scripts/deps.test.ts`
 Run: `git commit -m "chore: add wordnet-db and ejdict for Plan 3 dictionary definitions"`
@@ -168,7 +173,7 @@ Run: `git commit -m "chore: add wordnet-db and ejdict for Plan 3 dictionary defi
 - データ行: `lemma pos synset_cnt p_cnt [ptr_symbol…] sense_cnt tagsense_cnt offset…`。`ptr_symbol` の個数は行ごとに違うので、**末尾から `synset_cnt` 個**を offset とみなすのが安全。先頭が主語義。
 - `data.*` のデータ行: `offset lex_filenum ss_type w_cnt word lex_id … | gloss`。gloss は `定義; "用例"; "用例"` の形で、**定義自体がセミコロンを含む**（`draw air into, and expel out of, the lungs; "I can breathe better…"`）。最初の `;` ではなく最初の `; "` で切る。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/scripts/wordnet.test.ts` を新規作成:
 
@@ -237,12 +242,12 @@ describe('parseData', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/scripts/wordnet.test.ts`
 Expected: FAIL（`Failed to resolve import` / モジュールが存在しない）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `scripts/lib/wordnet.mjs` を新規作成:
 
@@ -297,17 +302,17 @@ export function parseData(text) {
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/scripts/wordnet.test.ts`
 Expected: PASS（5 件）
 
-- [ ] **Step 5: lint とビルドを確認する**
+- [x] **Step 5: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add scripts/lib/wordnet.mjs tests/scripts/wordnet.test.ts`
 Run: `git commit -m "feat: add WordNet index and data parsers for definition build"`
@@ -325,7 +330,7 @@ Run: `git commit -m "feat: add WordNet index and data parsers for definition bui
 - `lib/data/dictionary/{a..z}.json` はフラットな `{ "見出し": "訳文" }`。キーは大小混在（`"C"`, `"c."`, `"cat"`）。値は**先頭に半角スペースが 1 個入り**、複数語義は ` / ` 区切り。`『』` は強調記号。
 - `lib/data/irregular_verbs.json` は 150 件の `{ "活用形": "原形" }`。`"born, borne": "bear"` のようにカンマ複合キーが 1 件だけある。`mice` は**含まれない**（不規則名詞は Task 4 の手書き表が担う）。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/scripts/ejdict.test.ts` を新規作成:
 
@@ -396,12 +401,12 @@ describe('parseIrregularVerbs', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/scripts/ejdict.test.ts`
 Expected: FAIL（モジュールが存在しない）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `scripts/lib/ejdict.mjs` を新規作成:
 
@@ -456,17 +461,17 @@ export function parseIrregularVerbs(obj) {
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/scripts/ejdict.test.ts`
 Expected: PASS（6 件）
 
-- [ ] **Step 5: lint を確認する**
+- [x] **Step 5: lint を確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add scripts/lib/ejdict.mjs tests/scripts/ejdict.test.ts`
 Run: `git commit -m "feat: add ejdict bucket and irregular verb parsers"`
@@ -481,7 +486,7 @@ Run: `git commit -m "feat: add ejdict bucket and irregular verb parsers"`
 
 WordNet の例外リスト（`*.exc`）は `wordnet-db` に**同梱されていない**（`npm pack` で確認済み）。そのため不規則動詞は ejdict の表、不規則名詞・形容詞は手書き表で補い、残りは接尾辞規則で剥がす。候補は必ず WordNet 見出し語 Set で検証するので、誤剥がし（`THIS → THI`）は自動的に棄却される。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/scripts/lemmatize.test.ts` を新規作成:
 
@@ -568,12 +573,12 @@ describe('lemmatize', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/scripts/lemmatize.test.ts`
 Expected: FAIL（モジュールが存在しない）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `scripts/lib/lemmatize.mjs` を新規作成:
 
@@ -654,17 +659,17 @@ export function lemmatize(word, knownLemmas, irregularVerbs) {
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/scripts/lemmatize.test.ts`
 Expected: PASS（6 件）
 
-- [ ] **Step 5: lint を確認する**
+- [x] **Step 5: lint を確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add scripts/lib/lemmatize.mjs tests/scripts/lemmatize.test.ts`
 Run: `git commit -m "feat: add lemmatizer resolving inflected words to base forms"`
@@ -685,7 +690,7 @@ Run: `git commit -m "feat: add lemmatizer resolving inflected words to base form
 
 上書き衝突は起きない。`lemmatize` の戻り値は必ず `knownLemmas` で検証されているので、`{ b: … }` で書かれる語が別の語の原形になることはなく、逆に原形として書かれた語が `{ b: … }` で上書きされることもない。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/scripts/buildDefs.test.ts` を新規作成:
 
@@ -781,12 +786,12 @@ describe('buildBuckets', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/scripts/buildDefs.test.ts`
 Expected: FAIL（モジュールが存在しない）
 
-- [ ] **Step 3: バケット組み立てを実装する**
+- [x] **Step 3: バケット組み立てを実装する**
 
 `scripts/lib/buckets.mjs` を新規作成:
 
@@ -874,12 +879,12 @@ export function buildBuckets({ words, index, data, japanese, irregularVerbs, kno
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/scripts/buildDefs.test.ts`
 Expected: PASS（6 件）
 
-- [ ] **Step 5: 生成スクリプトを書く**
+- [x] **Step 5: 生成スクリプトを書く**
 
 `scripts/build-defs.mjs` を新規作成:
 
@@ -952,7 +957,7 @@ console.log(
 );
 ```
 
-- [ ] **Step 6: 実際に生成して結果を確認する**
+- [x] **Step 6: 実際に生成して結果を確認する**
 
 Run: `npm run build:dict`
 Expected: `✓ wrote 274,137 words to …/public/dict/twl06.txt`
@@ -968,7 +973,7 @@ Expected: `{"b":"GO","e":[["v", …]], "j":[…]}` — バケットを跨ぐの�
 
 出力された合計サイズを控えて Task 11 の README 更新で使う。
 
-- [ ] **Step 7: 全テストと lint とビルドを確認する**
+- [x] **Step 7: 全テストと lint とビルドを確認する**
 
 Run: `npx vitest run`
 Expected: 全 PASS
@@ -979,7 +984,7 @@ Expected: エラー 0、警告 0
 Run: `npm run build`
 Expected: 成功。`dist/dict/defs/a.json` 〜 `z.json` が生成される
 
-- [ ] **Step 8: コミット**
+- [x] **Step 8: コミット**
 
 Run: `git add scripts/lib/buckets.mjs scripts/build-defs.mjs tests/scripts/buildDefs.test.ts`
 Run: `git commit -m "feat: generate per-letter definition buckets from WordNet and ejdict"`
@@ -993,7 +998,7 @@ Run: `git commit -m "feat: generate per-letter definition buckets from WordNet a
 - Create: `src/lookup/dictLoader.ts`
 - Test: `tests/lookup/dictLoader.test.ts`（新規）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/lookup/dictLoader.test.ts` を新規作成:
 
@@ -1115,12 +1120,12 @@ describe('createDictLoader', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/lookup/dictLoader.test.ts`
 Expected: FAIL（`Failed to resolve import "../../src/lookup/dictLoader"`）
 
-- [ ] **Step 3: 型を実装する**
+- [x] **Step 3: 型を実装する**
 
 `src/lookup/types.ts` を新規作成:
 
@@ -1169,7 +1174,7 @@ export type LookupResult =
   | { kind: 'error' };
 ```
 
-- [ ] **Step 4: ローダを実装する**
+- [x] **Step 4: ローダを実装する**
 
 `src/lookup/dictLoader.ts` を新規作成:
 
@@ -1249,12 +1254,12 @@ export function createDictLoader(
 }
 ```
 
-- [ ] **Step 5: テストが通ることを確認する**
+- [x] **Step 5: テストが通ることを確認する**
 
 Run: `npx vitest run tests/lookup/dictLoader.test.ts`
 Expected: PASS（10 件）
 
-- [ ] **Step 6: lint とビルドを確認する**
+- [x] **Step 6: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
@@ -1262,7 +1267,7 @@ Expected: エラー 0、警告 0
 Run: `npm run build`
 Expected: 成功
 
-- [ ] **Step 7: コミット**
+- [x] **Step 7: コミット**
 
 Run: `git add src/lookup/types.ts src/lookup/dictLoader.ts tests/lookup/dictLoader.test.ts`
 Run: `git commit -m "feat: add lazy per-letter definition loader with inflight dedup"`
@@ -1275,7 +1280,7 @@ Run: `git commit -m "feat: add lazy per-letter definition loader with inflight d
 - Create: `src/lookup/useDefinition.ts`
 - Test: `tests/lookup/useDefinition.test.tsx`（新規）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/lookup/useDefinition.test.tsx` を新規作成:
 
@@ -1335,12 +1340,12 @@ describe('useDefinition', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/lookup/useDefinition.test.tsx`
 Expected: FAIL（`Failed to resolve import "../../src/lookup/useDefinition"`）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/lookup/useDefinition.ts` を新規作成:
 
@@ -1379,12 +1384,12 @@ export function useDefinition(
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/lookup/useDefinition.test.tsx`
 Expected: PASS（4 件）
 
-- [ ] **Step 5: lint とビルドを確認する**
+- [x] **Step 5: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
@@ -1392,7 +1397,7 @@ Expected: エラー 0、警告 0
 Run: `npm run build`
 Expected: 成功
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add src/lookup/useDefinition.ts tests/lookup/useDefinition.test.tsx`
 Run: `git commit -m "feat: add useDefinition hook with loading state and retry"`
@@ -1407,7 +1412,7 @@ Run: `git commit -m "feat: add useDefinition hook with loading state and retry"`
 
 既存の `src/ui/Sheet.tsx` をそのまま使う。シグネチャは `{ title, onDismiss, children }` で、モバイルではボトムシート、PC（769px〜）では中央モーダルになる。`Sheet` が `window` / `document` を使うので、テスト側でも `no-undef` の disable が要る箇所に注意する。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/DefinitionSheet.test.tsx` を新規作成:
 
@@ -1488,12 +1493,12 @@ describe('DefinitionSheet', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/ui/DefinitionSheet.test.tsx`
 Expected: FAIL（`Failed to resolve import "../../src/ui/DefinitionSheet"`）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/ui/DefinitionSheet.tsx` を新規作成:
 
@@ -1579,12 +1584,12 @@ export function DefinitionSheet({
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/DefinitionSheet.test.tsx`
 Expected: PASS（7 件）
 
-- [ ] **Step 5: lint とビルドを確認する**
+- [x] **Step 5: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0。ここで `tests/ui/DefinitionSheet.test.tsx` に `no-undef` が出た場合は、その行の直前に `// eslint-disable-next-line no-undef` を足す
@@ -1592,7 +1597,7 @@ Expected: エラー 0、警告 0。ここで `tests/ui/DefinitionSheet.test.tsx`
 Run: `npm run build`
 Expected: 成功
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add src/ui/DefinitionSheet.tsx tests/ui/DefinitionSheet.test.tsx`
 Run: `git commit -m "feat: add DefinitionSheet rendering loading, found, not-found and error states"`
@@ -1620,7 +1625,7 @@ export type Move =
   | { kind: 'pass' };
 ```
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/WordChip.test.tsx` を新規作成:
 
@@ -1686,12 +1691,12 @@ describe('MoveWords', () => {
 });
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `npx vitest run tests/ui/WordChip.test.tsx`
 Expected: FAIL（`Failed to resolve import "../../src/ui/WordChip"`）
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/ui/WordChip.tsx` を新規作成:
 
@@ -1740,12 +1745,12 @@ export function MoveWords({
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/WordChip.test.tsx`
 Expected: PASS（5 件）
 
-- [ ] **Step 5: lint とビルドを確認する**
+- [x] **Step 5: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
@@ -1753,7 +1758,7 @@ Expected: エラー 0、警告 0
 Run: `npm run build`
 Expected: 成功
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 Run: `git add src/ui/WordChip.tsx tests/ui/WordChip.test.tsx`
 Run: `git commit -m "feat: add tappable word chips for played moves"`
@@ -1768,7 +1773,7 @@ Run: `git commit -m "feat: add tappable word chips for played moves"`
 
 `src/App.tsx` は既にやや大きいが、足すのはシート開閉状態（`useState<string | null>`）とチップへの差し替えだけで、表示ロジックは `DefinitionSheet` 側に閉じている。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/App.definition.test.tsx` を新規作成。セットアップは既存の `tests/ui/App.layout.test.tsx` と同じ形（`useAiWorker` をモックし、`fetch` と `matchMedia` を stub し、`mode-free` から開始する）にそろえる:
 
@@ -1825,12 +1830,12 @@ describe('App の辞書表示', () => {
 
 チップのクリック→シート表示は Task 8・9 で単体検証済みなので、ここでは App 側の配線が壊れていないこと（回帰）と、辞書が遅延読み込みであることだけを見る。
 
-- [ ] **Step 2: テストが通ることを確認する**
+- [x] **Step 2: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/App.definition.test.tsx`
 Expected: PASS（3 件）。この 3 件は組み込み前でも通る回帰テストで、Step 3 以降の変更で壊れないことを守るためにある。ここで FAIL する場合は、先にセットアップを `tests/ui/App.layout.test.tsx` に合わせ直すこと。
 
-- [ ] **Step 3: import と状態を足す**
+- [x] **Step 3: import と状態を足す**
 
 `src/App.tsx` の import 群（1-17 行）の末尾に足す:
 
@@ -1854,7 +1859,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 ```
 
-- [ ] **Step 4: Escape の抑止対象にシートを足す**
+- [x] **Step 4: Escape の抑止対象にシートを足す**
 
 `src/App.tsx` の次の行を探す:
 
@@ -1868,7 +1873,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   const isSheetOpen = pendingBlank !== null || showExchange || selectedWord !== null;
 ```
 
-- [ ] **Step 5: 直前手の単語をチップにする**
+- [x] **Step 5: 直前手の単語をチップにする**
 
 `src/App.tsx` の直前手ブロック（`const last = state.history[state.history.length - 1];` で始まる IIFE、現状 259-276 行）を次に置き換える:
 
@@ -1894,7 +1899,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         })()}
 ```
 
-- [ ] **Step 6: 履歴の単語をチップにする**
+- [x] **Step 6: 履歴の単語をチップにする**
 
 `src/App.tsx` の履歴 `<ol>` 内の `map` コールバック（現状 284-300 行）を次に置き換える:
 
@@ -1919,7 +1924,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               })}
 ```
 
-- [ ] **Step 7: シートを描画する**
+- [x] **Step 7: シートを描画する**
 
 既存の `BlankLetterModal` / `ExchangeModal` を描画している箇所の隣に足す:
 
@@ -1933,12 +1938,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         )}
 ```
 
-- [ ] **Step 8: 全テストを通す**
+- [x] **Step 8: 全テストを通す**
 
 Run: `npx vitest run`
 Expected: 全 PASS。直前手や履歴の文字列を検査している既存テストがあると、チップ化でテキストノードが分割されて落ちる可能性がある。落ちた場合は、テスト側を `getByRole('button', { name: '<単語> の意味を見る' })` に直す。**アサーションの意図を弱めないこと**（例: 存在確認を削除して通すのは不可）。
 
-- [ ] **Step 9: lint とビルドを確認する**
+- [x] **Step 9: lint とビルドを確認する**
 
 Run: `npx eslint .`
 Expected: エラー 0、警告 0
@@ -1946,7 +1951,7 @@ Expected: エラー 0、警告 0
 Run: `npm run build`
 Expected: 成功
 
-- [ ] **Step 10: コミット**
+- [x] **Step 10: コミット**
 
 Run: `git add src/App.tsx tests/ui/App.definition.test.tsx`
 Run: `git commit -m "feat: open definition sheet from word chips in move history"`
@@ -1959,7 +1964,7 @@ Run: `git commit -m "feat: open definition sheet from word chips in move history
 - Modify: `README.md`
 - Modify: `docs/superpowers/plans/2026-09-09-plan-3-dictionary.md`（チェックボックスを埋める）
 
-- [ ] **Step 1: README を更新する**
+- [x] **Step 1: README を更新する**
 
 `README.md` の 5 行目:
 
@@ -1999,7 +2004,7 @@ Run: `git commit -m "feat: open definition sheet from word chips in move history
 定義ファイル `public/dict/defs/{a..z}.json` も `.gitignore` 済みですが、同じく `prebuild` が `wordnet-db` と `ejdict` から毎回生成します。
 ```
 
-- [ ] **Step 2: 完了条件を機械的に検証する**
+- [x] **Step 2: 完了条件を機械的に検証する**
 
 Run: `npx vitest run`
 Expected: 全 PASS
@@ -2013,7 +2018,7 @@ Expected: 成功
 Run: `node -e "const fs=require('fs');const n=fs.readdirSync('dist/dict/defs');console.log(n.length, n.slice(0,3).join(','))"`
 Expected: `26 a.json,b.json,c.json`
 
-- [ ] **Step 3: 完了条件を手で検証する**
+- [x] **Step 3: 完了条件を手で検証する**
 
 Run: `npm run dev`（バックグラウンド実行）
 
@@ -2028,11 +2033,11 @@ Run: `npm run dev`（バックグラウンド実行）
 
 `npm run dev` を停止する。
 
-- [ ] **Step 4: 計画のチェックボックスを埋める**
+- [x] **Step 4: 計画のチェックボックスを埋める**
 
 `docs/superpowers/plans/2026-09-09-plan-3-dictionary.md` の `- [ ]` を全て `- [x]` にする。
 
-- [ ] **Step 5: コミット**
+- [x] **Step 5: コミット**
 
 Run: `git add README.md docs/superpowers/plans/2026-09-09-plan-3-dictionary.md`
 Run: `git commit -m "docs: record Plan 3 dictionary lookup completion in README"`
