@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { GameProvider, useGame } from './state/GameContext';
 import { Board } from './ui/Board';
@@ -15,6 +15,9 @@ import { boardToSnapshot, rackToSnapshot } from './ai/snapshot';
 import type { Difficulty } from './ai/types';
 import { useDndSensors } from './ui/dndSensors';
 import { useMediaQuery } from './ui/useMediaQuery';
+import { createDictLoader } from './lookup/dictLoader';
+import { DefinitionSheet } from './ui/DefinitionSheet';
+import { MoveWords } from './ui/WordChip';
 
 function GameShell() {
   const { state, dispatch, dict } = useGame();
@@ -23,6 +26,9 @@ function GameShell() {
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
   const [pendingBlank, setPendingBlank] = useState<{ r: number; c: number } | null>(null);
   const [showExchange, setShowExchange] = useState(false);
+  // 辞書ローダはバケットのキャッシュを持つので 1 回だけ作る
+  const dictLoader = useMemo(() => createDictLoader(), []);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const sensors = useDndSensors();
   // キーボードショートカットは PC のみ（design.md §5.6）
   const isDesktop = useMediaQuery('(min-width: 769px)');
@@ -109,7 +115,7 @@ function GameShell() {
     state.status === 'playing' &&
     (state.mode === 'free' || state.players[state.currentPlayerIndex].id !== 'COM');
   // シート表示中はショートカットを止める。Escape は Sheet 側が「閉じる」に使う
-  const isSheetOpen = pendingBlank !== null || showExchange;
+  const isSheetOpen = pendingBlank !== null || showExchange || selectedWord !== null;
 
   useEffect(() => {
     if (!isDesktop || !isHumanTurn || isSheetOpen) return;
@@ -260,17 +266,18 @@ function GameShell() {
           const last = state.history[state.history.length - 1];
           if (!last) return null;
           const playerLabel = last.player === 'COM' ? '🤖 COM' : '👤 P1';
-          let content: string;
-          if (last.move.kind === 'place') {
-            content = `${last.wordsFormed.join(' + ')} +${last.score}`;
-          } else if (last.move.kind === 'pass') {
-            content = 'PASS';
-          } else {
-            content = `EXCHANGE (${last.move.tileIndices.length} 枚)`;
-          }
           return (
             <div className="font-pixel text-[10px] sm:text-xs text-stone-300">
-              直前手: {playerLabel}: {content}
+              直前手: {playerLabel}:{' '}
+              {last.move.kind === 'place' ? (
+                <>
+                  <MoveWords record={last} onSelect={setSelectedWord} /> +{last.score}
+                </>
+              ) : last.move.kind === 'pass' ? (
+                'PASS'
+              ) : (
+                `EXCHANGE (${last.move.tileIndices.length} 枚)`
+              )}
             </div>
           );
         })()}
@@ -284,17 +291,18 @@ function GameShell() {
               {state.history.slice(-8).reverse().map((rec, i) => {
                 const num = state.history.length - i;
                 const playerLabel = rec.player === 'COM' ? '🤖' : '👤';
-                let content: string;
-                if (rec.move.kind === 'place') {
-                  content = `${rec.wordsFormed.join(' + ')} +${rec.score}`;
-                } else if (rec.move.kind === 'pass') {
-                  content = 'PASS';
-                } else {
-                  content = `EXCHANGE (${rec.move.tileIndices.length})`;
-                }
                 return (
                   <li key={num}>
-                    {num}. {playerLabel} {content}
+                    {num}. {playerLabel}{' '}
+                    {rec.move.kind === 'place' ? (
+                      <>
+                        <MoveWords record={rec} onSelect={setSelectedWord} /> +{rec.score}
+                      </>
+                    ) : rec.move.kind === 'pass' ? (
+                      'PASS'
+                    ) : (
+                      `EXCHANGE (${rec.move.tileIndices.length})`
+                    )}
                   </li>
                 );
               })}
@@ -374,6 +382,13 @@ function GameShell() {
             setShowExchange(false);
           }}
           onCancel={() => setShowExchange(false)}
+        />
+      )}
+      {selectedWord && (
+        <DefinitionSheet
+          loader={dictLoader}
+          word={selectedWord}
+          onDismiss={() => setSelectedWord(null)}
         />
       )}
     </DndContext>
