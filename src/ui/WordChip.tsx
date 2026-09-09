@@ -32,7 +32,7 @@ export function MoveWords({
   return (
     <>
       {record.wordsFormed.map((word, i) => (
-        <span key={word}>
+        <span key={`${word}-${i}`}>
           {i > 0 && ' + '}
           <WordChip word={word} onSelect={onSelect} />
         </span>
