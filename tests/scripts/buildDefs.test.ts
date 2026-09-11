@@ -19,7 +19,7 @@ async function loadBuckets(): Promise<{
 
 function fixture() {
   return {
-    words: ['CAT', 'CATS', 'GO', 'WENT', 'ZZZZ', 'HOPE'],
+    words: ['CAT', 'CATS', 'GO', 'WENT', 'ZZZZ', 'HOPE', 'IF', 'ABACI'],
     index: {
       n: new Map([['cat', 'n1']]),
       v: new Map([['go', 'v1']]),
@@ -36,6 +36,9 @@ function fixture() {
       ['CAT', ['猫']],
       ['GO', ['行く']],
       ['HOPE', ['希望']],
+      // WordNet は名詞・動詞・形容詞・副詞しか持たないので前置詞・接続詞は knownLemmas に無い
+      ['IF', ['もし…ならば']],
+      ['ABACI', ['abacusの複数形']],
     ]),
     irregularVerbs: new Map([['WENT', 'GO']]),
     knownLemmas: new Set(['cat', 'go', 'hope']),
@@ -85,5 +88,14 @@ describe('buildBuckets', () => {
     const { buildBuckets } = await loadBuckets();
     const buckets = buildBuckets(fixture());
     expect(buckets.get('h')!.HOPE).toEqual({ j: ['希望'] });
+  });
+
+  // WordNet に無い前置詞・接続詞・不規則複数は lemmatize が null を返す。
+  // それでも和訳があるなら表示できるので落としてはいけない。
+  it('WordNet に無くても和訳があれば載せる', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const buckets = buildBuckets(fixture());
+    expect(buckets.get('i')!.IF).toEqual({ j: ['もし…ならば'] });
+    expect(buckets.get('a')!.ABACI).toEqual({ j: ['abacusの複数形'] });
   });
 });

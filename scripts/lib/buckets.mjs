@@ -60,7 +60,11 @@ export function buildBuckets({ words, index, data, japanese, irregularVerbs, kno
   for (const raw of words) {
     const word = String(raw).trim().toUpperCase();
     if (!/^[A-Z]+$/.test(word)) continue;
-    const lemma = lemmatize(word, knownLemmas, irregularVerbs);
+    // lemmatize は WordNet の見出し語でしか検証しない。WordNet は名詞・動詞・形容詞・
+    // 副詞しか持たないので IF / OF / AND のような機能語や不規則複数は null になる。
+    // EJDict がその語をそのまま持つなら和訳だけでも出せるので、自分自身を原形として扱う。
+    const lemma =
+      lemmatize(word, knownLemmas, irregularVerbs) ?? (japanese.has(word) ? word : null);
     if (!lemma) continue;
     const entry = definitionOf(lemma);
     if (!entry) continue;
