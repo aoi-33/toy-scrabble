@@ -9,6 +9,7 @@ import { BlankLetterModal } from './ui/BlankLetterModal';
 import { ExchangeModal } from './ui/ExchangeModal';
 import { ModeSelect } from './ui/ModeSelect';
 import { AboutSheet } from './ui/AboutSheet';
+import { RulesSheet } from './ui/RulesSheet';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
 import { useAiWorker } from './ai/useAiWorker';
@@ -31,6 +32,7 @@ function GameShell() {
   const dictLoader = useMemo(() => createDictLoader(), []);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [showAbout, setShowAbout] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const sensors = useDndSensors();
   // キーボードショートカットは PC のみ（design.md §5.6）
   const isDesktop = useMediaQuery('(min-width: 769px)');
@@ -155,13 +157,23 @@ function GameShell() {
             辞書を読み込んでいます (約 2.7MB)…
           </p>
         )}
-        <button
-          type="button"
-          onClick={() => setShowAbout(true)}
-          className="font-pixel text-[10px] text-stone-400 hover:text-stone-200 min-h-[44px] px-3"
-        >
-          ABOUT
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowRules(true)}
+            className="font-pixel text-[10px] text-stone-400 hover:text-stone-200 min-h-[44px] px-3"
+          >
+            RULES
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAbout(true)}
+            className="font-pixel text-[10px] text-stone-400 hover:text-stone-200 min-h-[44px] px-3"
+          >
+            ABOUT
+          </button>
+        </div>
+        {showRules && <RulesSheet onDismiss={() => setShowRules(false)} />}
         {showAbout && <AboutSheet onDismiss={() => setShowAbout(false)} />}
       </div>
     );
