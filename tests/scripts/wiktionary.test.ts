@@ -9,6 +9,7 @@ type Extracted = {
   gloss: string | null;
   base: string | null;
   japanese: string[];
+  ipa: [string, string][];
 };
 
 async function loadWiktionary(): Promise<{
@@ -35,6 +36,7 @@ describe('extractEntry', () => {
       gloss: 'A domesticated feline animal.',
       base: null,
       japanese: [],
+      ipa: [],
     });
   });
 
@@ -100,7 +102,7 @@ describe('extractEntry', () => {
         lang_code: 'en',
         senses: [{ glosses: ['plural of cat'], form_of: [{ word: 'cat' }] }],
       }),
-    ).toEqual({ word: 'CATS', raw: 'cats', pos: 'n', gloss: null, base: 'CAT', japanese: [] });
+    ).toEqual({ word: 'CATS', raw: 'cats', pos: 'n', gloss: null, base: 'CAT', japanese: [], ipa: [] });
   });
 
   it('alt_of も原形として扱う', async () => {
@@ -134,6 +136,7 @@ describe('extractEntry', () => {
       gloss: 'The act of establishing something.',
       base: 'FOUND',
       japanese: [],
+      ipa: [],
     });
   });
 
@@ -160,6 +163,7 @@ describe('extractEntry', () => {
       gloss: 'To interpret written symbols.',
       base: null,
       japanese: [],
+      ipa: [],
     });
   });
 
@@ -214,6 +218,90 @@ describe('extractEntry', () => {
     expect(extractEntry({ word: 'zzz', pos: 'noun', lang_code: 'en', senses: [] })).toBeNull();
     expect(
       extractEntry({ word: 'zzz', pos: 'noun', lang_code: 'en', senses: [{ tags: ['no-gloss'] }] }),
+    ).toBeNull();
+  });
+
+  // 学習者に見せるのは音素表記 /.../。[...] は異音まで書いた狭い表記で細かすぎる
+  it('UK と US のタグが両方あれば両方拾う', async () => {
+    const { extractEntry } = await loadWiktionary();
+    const entry = extractEntry({
+      word: 'hello',
+      pos: 'intj',
+      lang_code: 'en',
+      senses: [{ glosses: ['A greeting.'] }],
+      sounds: [
+        { ipa: '/həˈləʊ/', tags: ['Received-Pronunciation'] },
+        { ipa: '/hɛˈloʊ/', tags: ['General-American'] },
+        { ipa: '[hɛˈɫoʊ]' },
+        { ogg_url: 'https://example.invalid/hello.ogg' },
+      ],
+    });
+    expect(entry?.ipa).toEqual([
+      ['uk', '/həˈləʊ/'],
+      ['us', '/hɛˈloʊ/'],
+    ]);
+  });
+
+  // タグ無しの /.../ が多数派。落とすと収録率が 20.9% から 6.3% まで下がる
+  it('タグが無ければ x として 1 件だけ拾う', async () => {
+    const { extractEntry } = await loadWiktionary();
+    const entry = extractEntry({
+      word: 'cats',
+      pos: 'noun',
+      lang_code: 'en',
+      senses: [{ glosses: ['plural of cat'], form_of: [{ word: 'cat' }] }],
+      sounds: [{ ipa: '/kæts/' }, { ipa: '/kats/' }],
+    });
+    expect(entry?.ipa).toEqual([['x', '/kæts/']]);
+  });
+
+  it('片方のタグしか無ければその 1 件を返す', async () => {
+    const { extractEntry } = await loadWiktionary();
+    const entry = extractEntry({
+      word: 'argan',
+      pos: 'noun',
+      lang_code: 'en',
+      senses: [{ glosses: ['A Moroccan tree.'] }],
+      sounds: [{ ipa: '/ˈɑː(ɹ)ɡən/', tags: ['Received-Pronunciation'] }],
+    });
+    expect(entry?.ipa).toEqual([['uk', '/ˈɑː(ɹ)ɡən/']]);
+  });
+
+  it('狭い音声表記 [...] しか無ければ空にする', async () => {
+    const { extractEntry } = await loadWiktionary();
+    const entry = extractEntry({
+      word: 'cat',
+      pos: 'noun',
+      lang_code: 'en',
+      senses: [{ glosses: ['feline'] }],
+      sounds: [{ ipa: '[kʰæt]' }, { enpr: 'kăt' }],
+    });
+    expect(entry?.ipa).toEqual([]);
+  });
+
+  it('sounds が無ければ空にする', async () => {
+    const { extractEntry } = await loadWiktionary();
+    const entry = extractEntry({
+      word: 'cat',
+      pos: 'noun',
+      lang_code: 'en',
+      senses: [{ glosses: ['feline'] }],
+    });
+    expect(entry?.ipa).toEqual([]);
+  });
+
+  // 発音だけの語を通すと「意味は出ないが発音はある語」が混ざり、
+  // build-defs.mjs が担保している「遊べる語の定義収録率 100%」と噛み合わなくなる
+  it('発音しか無いエントリは捨てる', async () => {
+    const { extractEntry } = await loadWiktionary();
+    expect(
+      extractEntry({
+        word: 'zyme',
+        pos: 'noun',
+        lang_code: 'en',
+        senses: [],
+        sounds: [{ ipa: '/zaɪm/' }],
+      }),
     ).toBeNull();
   });
 });

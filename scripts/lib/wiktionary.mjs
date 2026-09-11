@@ -60,8 +60,30 @@ function japaneseOf(translations) {
 }
 
 /**
+ * 発音記号。音素表記 /.../ だけ拾う。[...] は異音まで書いた狭い表記で学習者には細かすぎる。
+ * タグ付きの UK/US が両方あれば両方、片方だけならその 1 件、
+ * どちらも無ければタグ無しの先頭 1 件を x として返す。
+ */
+function ipaOf(sounds) {
+  let uk = null;
+  let us = null;
+  let any = null;
+  for (const s of sounds) {
+    if (typeof s.ipa !== 'string' || !s.ipa.startsWith('/')) continue;
+    const tags = s.tags ?? [];
+    if (!uk && tags.includes('Received-Pronunciation')) uk = s.ipa;
+    else if (!us && tags.includes('General-American')) us = s.ipa;
+    else if (!any) any = s.ipa;
+  }
+  if (uk && us) return [['uk', uk], ['us', us]];
+  if (uk) return [['uk', uk]];
+  if (us) return [['us', us]];
+  return any ? [['x', any]] : [];
+}
+
+/**
  * @param {any} obj kaikki.org の 1 行を JSON.parse したもの
- * @returns {{word: string, raw: string, pos: string, gloss: string|null, base: string|null, japanese: string[]}|null}
+ * @returns {{word: string, raw: string, pos: string, gloss: string|null, base: string|null, japanese: string[], ipa: [string, string][]}|null}
  */
 export function extractEntry(obj) {
   if (!obj || obj.lang_code !== 'en') return null;
@@ -76,7 +98,9 @@ export function extractEntry(obj) {
   const base = rawBase === word ? null : rawBase;
   const gloss = glossOf(senses);
   const japanese = japaneseOf(Array.isArray(obj.translations) ? obj.translations : []);
+  const ipa = ipaOf(Array.isArray(obj.sounds) ? obj.sounds : []);
 
+  // 発音だけの語は通さない。意味を出せない語を辞書に残さないため（ipa は条件に入れない）
   if (gloss === null && base === null && japanese.length === 0) return null;
-  return { word, raw: obj.word, pos, gloss, base, japanese };
+  return { word, raw: obj.word, pos, gloss, base, japanese, ipa };
 }
