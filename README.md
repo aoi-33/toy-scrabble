@@ -4,6 +4,8 @@
 現時点でフリープレイ + COM 対戦 (Easy/Medium/Hard) に対応しています。
 英英・英和辞書表示（Plan 3）、モバイル対応と GitHub Pages デプロイ（Plan 4）も実装済みです。
 
+ルールはアプリ内の `RULES` ボタン（ホーム画面）とプレイ中のヘッダーの `?` からも読めます。
+
 ## 遊び方（Plan 1 時点）
 
 1. ホーム画面で `FREE PLAY` / `COM EASY` / `COM MEDIUM` / `COM HARD` から選択してゲーム開始
@@ -34,6 +36,7 @@ npm run test       # unit + component (Vitest)
 
 ## 変更履歴
 
+- **2026-09-12** ゲームのルールをアプリ内で読めるようにした。ホーム画面の `RULES` ボタンと、プレイ中のヘッダーの `?` から開ける。配置の制約・得点計算・終了時の精算まで載せている。
 - **2026-09-12** 英単語の発音記号（IPA）を定義シートに表示するようにした。英語版 Wiktionary の `sounds` から音素表記を抽出し、UK（RP）と US（GA）のタグが両方あれば併記する。収録率は playable な語の 43.8%（2 文字語 95.2% / 3 文字語 85.5%）。あわせて Wiktionary データを最新の kaikki.org ダンプから作り直したため、意味を引ける語が増えて playable 259,278 → 259,416 語になった。
 - **2026-09-11** 意味を出せない語（`GIE` など Scots 由来や Collins 特有の語 14,859 語）を単語リストから除外し、playable な語の収録率を 100% にした。あわせて Wiktionary にしか無い語の屈折形（`ABOLISHERS` → `ABOLISH`）を原形にリンクできていなかったバグを修正。playable 274,137 → 259,278 語。
 - **2026-09-11** favicon を追加し、スマートフォンのホーム画面にアプリとして追加できるようにした（Web App Manifest + Service Worker）。アイコンは Flaticon（作者: Icon.doit）。
