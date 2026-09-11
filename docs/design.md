@@ -498,7 +498,7 @@ E2E は PR 時に別ジョブで実行（デプロイをブロックしない）
 
 | 資産 | ソース | ライセンス |
 |---|---|---|
-| 英単語リスト (259,278 語) | npm `word-list` → `atebits/Words`（Letterpress Word List）から定義を引けない語を除外 | パッケージは MIT、元データは CC0-1.0 |
+| 英単語リスト (259,416 語) | npm `word-list` → `atebits/Words`（Letterpress Word List）から定義を引けない語を除外 | パッケージは MIT、元データは CC0-1.0 |
 | WordNet 3.1 | npm `wordnet-db`（Princeton University） | WordNet License（著作権表示と免責を全コピーに添付する義務あり） |
 | 英語版 Wiktionary | kaikki.org の機械可読版 JSONL | CC BY-SA 3.0（表示・変更点の明示・**継承**の義務あり） |
 | ejdict | npm `ejdict` → `kujirahand/EJDict` | MIT（元データはパブリックドメイン） |

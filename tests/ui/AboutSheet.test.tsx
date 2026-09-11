@@ -35,6 +35,12 @@ describe('AboutSheet', () => {
     expect(screen.getByText(/Press Start 2P/)).toBeInTheDocument();
   });
 
+  // CC BY-SA 3.0 は変更点の明示を配布条件にしている。発音記号の絞り込みも変更に当たる
+  it('Wiktionary への変更点として発音記号の絞り込みを挙げる', () => {
+    render(<AboutSheet onDismiss={() => {}} />);
+    expect(screen.getByText(/発音記号は音素表記/)).toBeInTheDocument();
+  });
+
   it('閉じるボタンで onDismiss を呼ぶ', () => {
     const onDismiss = vi.fn();
     render(<AboutSheet onDismiss={onDismiss} />);

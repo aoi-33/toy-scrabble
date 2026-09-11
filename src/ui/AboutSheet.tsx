@@ -30,7 +30,7 @@ export function AboutSheet({ onDismiss }: { onDismiss: () => void }) {
         <section>
           <h3 className="text-stone-400 mb-1">単語リスト</h3>
           <p>
-            259,278 語。npm word-list（元データは atebits/Words）の 274,137 語から、
+            259,416 語。npm word-list（元データは atebits/Words）の 274,137 語から、
             意味を表示できない語を除いています。パッケージは MIT、元データは CC0-1.0 です。
             公式トーナメント辞書の TWL06 / NWL は使っていません。
           </p>
@@ -64,7 +64,7 @@ export function AboutSheet({ onDismiss }: { onDismiss: () => void }) {
 
         {/* CC BY-SA 3.0 は表示・ライセンスへの言及・変更点の明示を配布条件にしている */}
         <section>
-          <h3 className="text-stone-400 mb-1">英英定義: Wiktionary</h3>
+          <h3 className="text-stone-400 mb-1">英英定義・発音記号: Wiktionary</h3>
           <p>
             WordNet が持たない機能語や専門語は、英語版 Wiktionary（kaikki.org 経由）の語義で
             補っています。本文は CC BY-SA 3.0 で提供されており、継承条項があるため、
@@ -72,6 +72,7 @@ export function AboutSheet({ onDismiss }: { onDismiss: () => void }) {
           </p>
           <p className="mt-1 text-stone-400">
             変更点: 品詞ごとに語義を 1 件だけ残し、120 文字を超える場合は末尾を省略しています。
+            発音記号は音素表記（/.../）のみを採用し、UK / US のタグが無い場合は先頭 1 件だけを残しています。
           </p>
           <p className="mt-1 break-all text-stone-400">
             en.wiktionary.org / creativecommons.org/licenses/by-sa/3.0/
