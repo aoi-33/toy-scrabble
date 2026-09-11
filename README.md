@@ -34,6 +34,7 @@ npm run test       # unit + component (Vitest)
 
 ## 変更履歴
 
+- **2026-09-11** 単語の意味が出ないケースを解消。英英定義に Wiktionary を追加し、収録率を 43.9% → 88.9% に改善（2 文字語 100% / 3 文字語 96.8%）。WordNet が持たない機能語（`IF` / `OF` / `AND`）や専門語（`ARGAN`）も引けるようになりました。
 - **2026-09-10** 外部データソースのライセンス表記を README と画面内 About モーダルに追加。あわせて辞書ファイルを実態に合わせ `twl06.txt` → `words.txt` に改名（中身は TWL06 ではなく CC0 の単語リスト）。
 - **2026-09-09** Plan 3 完了: 履歴の単語から英英・英和辞書を引けるようにした。定義は WordNet 3.1 と ejdict からビルド時に生成し（120,435 語 / 計 9.8 MB）、先頭文字ごとの JSON を遅延読み込みする。
 - **2026-09-07** Plan 4 完了: モバイル対応（レスポンシブ盤面・タッチドラッグ・ボトムシート）と GitHub Pages 自動デプロイを追加。
@@ -60,7 +61,15 @@ npm run test       # unit + component (Vitest)
 
 辞書ファイル `public/dict/words.txt` は `.gitignore` 済みですが、`prebuild` が npm の `word-list` パッケージから毎回生成するため CI でも同じものが作られます。
 
-定義ファイル `public/dict/defs/{a..z}.json` も `.gitignore` 済みですが、同じく `prebuild` が `wordnet-db` と `ejdict` から毎回生成します。
+定義ファイル `public/dict/defs/{a..z}.json` も `.gitignore` 済みですが、同じく `prebuild` が `wordnet-db`・`ejdict`・`data/wiktionary.json` から毎回生成します。
+
+`data/wiktionary.json` は生成物ですが**リポジトリにコミットしています**（15 MB）。元になる kaikki.org の
+JSONL が 3.3 GB あり CI で毎回落とすのは現実的でないためです。更新したいときだけ手元で次を実行します。
+
+```bash
+curl -O https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl
+npm run build:wiktionary -- ./kaikki.org-dictionary-English.jsonl
+```
 
 ## 対応環境
 
@@ -77,12 +86,29 @@ npm run test       # unit + component (Vitest)
 |---|---|---|
 | 英単語リスト (274,137 語) | npm [`word-list`](https://www.npmjs.com/package/word-list) → [atebits/Words](https://github.com/atebits/Words) | パッケージは MIT、元データは CC0-1.0 |
 | 英英定義 (WordNet 3.1) | npm [`wordnet-db`](https://www.npmjs.com/package/wordnet-db)（Princeton University） | WordNet License（下記） |
+| 英英定義（WordNet に無い語） | [kaikki.org](https://kaikki.org/dictionary/English/) 経由の英語版 [Wiktionary](https://en.wiktionary.org/) | CC BY-SA 3.0（下記） |
 | 和訳 (EJDict) | npm [`ejdict`](https://www.npmjs.com/package/ejdict) → [kujirahand/EJDict](https://github.com/kujirahand/EJDict) | MIT（元データはパブリックドメイン） |
 | Press Start 2P フォント | Google Fonts（CDN 参照） | SIL Open Font License 1.1 |
 | `@dnd-kit/core`, `@dnd-kit/utilities` | npm | MIT |
 
 **単語リストは TWL06 / NWL ではありません。** これらは NASPA の専有物でライセンス契約が必要なため使用していません。
 本アプリの単語リストは CC0-1.0 の Letterpress Word List で、再配布に制約はありません。
+
+### Wiktionary (CC BY-SA 3.0)
+
+WordNet は名詞・動詞・形容詞・副詞しか収録しておらず、`IF` / `OF` / `AND` のような機能語や
+`ARGAN` のような専門語の意味が出せませんでした。これを補うため、英語版 Wiktionary の
+機械可読版（[kaikki.org](https://kaikki.org/dictionary/English/) が公開する JSONL）から
+語義を抽出して `data/wiktionary.json` に入れています。
+
+Wiktionary の本文は **CC BY-SA 3.0** です。他のデータと違い**継承（share-alike）条項がある**ため、
+派生物である `data/wiktionary.json` と `public/dict/defs/{a..z}.json` の Wiktionary 由来部分も
+同じく CC BY-SA 3.0 で提供されます。リポジトリのソースコード自体は MIT のままです。
+
+- 原典: <https://en.wiktionary.org/>
+- ライセンス全文: <https://creativecommons.org/licenses/by-sa/3.0/>
+- **加えた変更**: 語義は品詞ごとに先頭の 1 件だけを残し、120 文字を超える場合は末尾を省略しています。
+  見出しは大文字に正規化し、A-Z 以外を含む見出しは除外しています。
 
 ### WordNet License
 

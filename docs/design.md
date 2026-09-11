@@ -390,6 +390,7 @@ Play ボタン押下で違反時、盤面下に赤バナーで理由を 3 秒表
 - `node_modules/word-list/words.txt`（CC0 の Letterpress Word List）
 - `node_modules/wordnet-db/`（Princeton WordNet）
 - `node_modules/ejdict/`（kujirahand/EJDict 由来）
+- `data/wiktionary.json`（kaikki.org の英語版 Wiktionary 抽出。生成物だがコミット済み）
 
 **出力:**
 - `public/dict/words.txt`（大文字化してコピー）
@@ -399,8 +400,19 @@ Play ボタン押下で違反時、盤面下に赤バナーで理由を 3 秒表
 **生成ロジック:**
 - WordNet の `data.*` をパースし頭文字別 bucket 化
 - ejdict-hand SQLite から `word` / `mean` を抽出、頭文字別 bucket 化
-- **TWL06 に存在する単語のみ保存**（サイズ削減）
-- 各 bucket ~500KB（uncompressed）、全体 ~8MB / ~2-3MB gzip
+- **word-list に存在する単語のみ保存**（サイズ削減）
+- 英英は WordNet を優先し、無い語だけ Wiktionary で埋める（WordNet の語義の方が短い）
+- 和訳は EJDict を優先し、無ければ Wiktionary の `translations` を使う
+- 各 bucket 最大 ~2MB（uncompressed、gzip で ~0.65MB）、全体 ~17MB
+
+**Wiktionary の取り込み（`scripts/build-wiktionary.mjs`、手動実行）:**
+- 元データ kaikki.org の JSONL は 3.3 GB あり CI で毎回落とせないため、
+  手元で `data/wiktionary.json`（15MB）に絞り込んでコミットする
+- 見出しは大文字化し、A-Z 以外を含むものは除外（盤に置けないため）
+- 品詞ごとに最初の語義だけ、120 文字で打ち切り
+- `plural of ...` などの `form_of` は原形参照に畳んでサイズを抑える
+- 大文字略語（`CATS` = CAT Scheme）と小文字見出し（`cats` = cat の複数形）が
+  衝突するので、小文字由来を優先する
 
 ### 6.2 辞書ローダ（`src/lookup/dictLoader.ts`）
 
@@ -488,6 +500,7 @@ E2E は PR 時に別ジョブで実行（デプロイをブロックしない）
 |---|---|---|
 | 英単語リスト (274,137 語) | npm `word-list` → `atebits/Words`（Letterpress Word List） | パッケージは MIT、元データは CC0-1.0 |
 | WordNet 3.1 | npm `wordnet-db`（Princeton University） | WordNet License（著作権表示と免責を全コピーに添付する義務あり） |
+| 英語版 Wiktionary | kaikki.org の機械可読版 JSONL | CC BY-SA 3.0（表示・変更点の明示・**継承**の義務あり） |
 | ejdict | npm `ejdict` → `kujirahand/EJDict` | MIT（元データはパブリックドメイン） |
 | Press Start 2P フォント | Google Fonts（CDN 参照、自己ホストはしない） | SIL Open Font License 1.1 |
 | `@dnd-kit/core` | npm | MIT |
@@ -496,7 +509,12 @@ E2E は PR 時に別ジョブで実行（デプロイをブロックしない）
 単語リストは CC0 なので GitHub Pages での再配布に制約がない。
 
 各ライセンス表示は `README.md` および画面内 About モーダルに明記。
-WordNet のみ「ALL copies に著作権表示と免責を添付」が明示的な義務であり、他は謝辞に留まる。
+義務が発生するのは 2 つだけで、他は謝辞に留まる。
+
+- **WordNet**: 「ALL copies に著作権表示と免責を添付」
+- **Wiktionary (CC BY-SA 3.0)**: 表示・ライセンスへの言及・変更点の明示に加え、**継承条項**がある。
+  そのため `data/wiktionary.json` と `public/dict/defs/` の Wiktionary 由来部分は CC BY-SA 3.0 で提供される
+  （ソースコード自体は MIT のまま）
 
 ---
 

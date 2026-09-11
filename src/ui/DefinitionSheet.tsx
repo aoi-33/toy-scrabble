@@ -3,8 +3,22 @@ import { useDefinition } from '../lookup/useDefinition';
 import type { DictLoader } from '../lookup/dictLoader';
 import type { Pos } from '../lookup/types';
 
-/** WordNet の品詞コードの表示ラベル */
-const POS_LABEL: Record<Pos, string> = { n: 'n.', v: 'v.', a: 'adj.', r: 'adv.' };
+/** 品詞コードの表示ラベル。辞書の慣習に合わせた英語の略記 */
+const POS_LABEL: Record<Pos, string> = {
+  n: 'n.',
+  v: 'v.',
+  a: 'adj.',
+  r: 'adv.',
+  prep: 'prep.',
+  conj: 'conj.',
+  pron: 'pron.',
+  det: 'det.',
+  intj: 'int.',
+  num: 'num.',
+  pre: 'pref.',
+  suf: 'suf.',
+  x: '—',
+};
 
 export function DefinitionSheet({
   loader,

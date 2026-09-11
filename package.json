@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "build:dict": "node scripts/build-dict.mjs",
     "build:defs": "node scripts/build-defs.mjs",
+    "build:wiktionary": "node scripts/build-wiktionary.mjs",
     "predev": "node scripts/build-dict.mjs && node scripts/build-defs.mjs",
     "prebuild": "node scripts/build-dict.mjs && node scripts/build-defs.mjs",
     "prepreview": "node scripts/build-dict.mjs && node scripts/build-defs.mjs"

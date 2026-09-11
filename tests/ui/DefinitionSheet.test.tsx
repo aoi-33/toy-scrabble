@@ -39,6 +39,29 @@ describe('DefinitionSheet', () => {
     expect(screen.getByText('ネコ科の動物')).toBeInTheDocument();
   });
 
+  // WordNet は名詞・動詞・形容詞・副詞しか持たず、IF / OF / AND の意味が出せなかった。
+  // Wiktionary で補った機能語の品詞がラベルまで届いていることを確かめる
+  it('機能語の品詞ラベルも出す', async () => {
+    const IF: LookupResult = {
+      kind: 'found',
+      word: 'IF',
+      base: null,
+      english: [
+        ['conj', 'Supposing that, assuming that.'],
+        ['prep', 'Expressing distance or motion.'],
+        ['intj', 'An expression of surprise.'],
+        ['x', 'A particle.'],
+      ],
+      japanese: [],
+    };
+    render(<DefinitionSheet loader={loaderOf(IF)} word="IF" onDismiss={() => {}} />);
+    expect(await screen.findByText('Supposing that, assuming that.')).toBeInTheDocument();
+    expect(screen.getByText('conj.')).toBeInTheDocument();
+    expect(screen.getByText('prep.')).toBeInTheDocument();
+    expect(screen.getByText('int.')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
   it('原形が異なるときは併記する', async () => {
     render(<DefinitionSheet loader={loaderOf(CATS)} word="CATS" onDismiss={() => {}} />);
     expect(await screen.findByText('CATS ← CAT')).toBeInTheDocument();

@@ -1,5 +1,23 @@
-/** WordNet の品詞コード。n=名詞 v=動詞 a=形容詞 r=副詞 */
-export type Pos = 'n' | 'v' | 'a' | 'r';
+/**
+ * 品詞コード。n=名詞 v=動詞 a=形容詞 r=副詞 は WordNet 由来。
+ * WordNet はこの 4 つしか持たず IF / OF / AND のような機能語が丸ごと欠けるので、
+ * Wiktionary から前置詞・接続詞・代名詞・限定詞・間投詞・数詞・接辞を足している。
+ * x は上記のどれにも当てはまらない品詞（助詞など）の受け皿。
+ */
+export type Pos =
+  | 'n'
+  | 'v'
+  | 'a'
+  | 'r'
+  | 'prep'
+  | 'conj'
+  | 'pron'
+  | 'det'
+  | 'intj'
+  | 'num'
+  | 'pre'
+  | 'suf'
+  | 'x';
 
 /** 英英定義 1 件。[品詞, 定義文] */
 export type EnglishSense = [Pos, string];

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
-// wordnet-db と ejdict から public/dict/defs/{a..z}.json を生成する
+// wordnet-db・ejdict・data/wiktionary.json から public/dict/defs/{a..z}.json を生成する
 // 実行: npm run build:defs（build-dict.mjs の後に走らせること）
 // 出力ファイルは .gitignore の public/dict/* で除外（生成物のため）
+//
+// data/wiktionary.json は build-wiktionary.mjs が作る。無ければここで落として構わない。
+// 黙って WordNet だけで組むとカバー率が半分以下に戻り、気付けないため。
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -45,8 +48,20 @@ const irregularVerbs = parseIrregularVerbs(
   JSON.parse(readFileSync(resolve(ejdictDir, 'irregular_verbs.json'), 'utf8')),
 );
 
+const wiktionary = new Map(
+  Object.entries(JSON.parse(readFileSync(resolve(rootDir, 'data/wiktionary.json'), 'utf8'))),
+);
+
 const words = readFileSync(resolve(rootDir, 'public/dict/words.txt'), 'utf8').split(/\r?\n/);
-const buckets = buildBuckets({ words, index, data, japanese, irregularVerbs, knownLemmas });
+const buckets = buildBuckets({
+  words,
+  index,
+  data,
+  japanese,
+  irregularVerbs,
+  knownLemmas,
+  wiktionary,
+});
 
 mkdirSync(outDir, { recursive: true });
 let totalEntries = 0;

@@ -12,6 +12,7 @@ async function loadBuckets(): Promise<{
     japanese: Map<string, string[]>;
     irregularVerbs: Map<string, string>;
     knownLemmas: Set<string>;
+    wiktionary?: Map<string, Definition>;
   }) => Map<string, Record<string, Definition>>;
 }> {
   return await import(BUCKETS_PATH);
@@ -42,6 +43,15 @@ function fixture() {
     ]),
     irregularVerbs: new Map([['WENT', 'GO']]),
     knownLemmas: new Set(['cat', 'go', 'hope']),
+    wiktionary: new Map<string, Definition>([
+      // WordNet にも EJDict にも無い語
+      ['ARGAN', { e: [['n', 'A Moroccan tree.']] }],
+      // 不規則複数。ox が knownLemmas に無いので lemmatize では解決できない
+      ['OXEN', { b: 'OX' }],
+      ['OX', { e: [['n', 'A castrated bull.']] }],
+      // WordNet と重なる語。語義が短い WordNet を優先したい
+      ['CAT', { e: [['n', 'An animal of the family Felidae kept as a pet.']] }],
+    ]),
   };
 }
 
@@ -97,5 +107,38 @@ describe('buildBuckets', () => {
     const buckets = buildBuckets(fixture());
     expect(buckets.get('i')!.IF).toEqual({ j: ['もし…ならば'] });
     expect(buckets.get('a')!.ABACI).toEqual({ j: ['abacusの複数形'] });
+  });
+
+  // ARGAN は WordNet にも EJDict にも無く、意味が出ないという報告の実例
+  it('WordNet にも EJDict にも無い語は Wiktionary が埋める', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ARGAN'];
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ARGAN).toEqual({ e: [['n', 'A Moroccan tree.']] });
+  });
+
+  // lemmatize は候補を WordNet でしか検証しないので OXEN → OX を解決できない
+  it('lemmatize が解けない屈折形を Wiktionary の原形参照で解決する', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'OXEN'];
+    const buckets = buildBuckets(input);
+    expect(buckets.get('o')!.OXEN).toEqual({ b: 'OX' });
+    expect(buckets.get('o')!.OX).toEqual({ e: [['n', 'A castrated bull.']] });
+  });
+
+  // Wiktionary の語義は長い。両方ある語では短い WordNet を使ってバケットを軽く保つ
+  it('WordNet と Wiktionary の両方にある語は WordNet を使う', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const buckets = buildBuckets(fixture());
+    expect(buckets.get('c')!.CAT).toEqual({ e: [['n', 'feline mammal']], j: ['猫'] });
+  });
+
+  it('Wiktionary を渡さなくても動く', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const buckets = buildBuckets({ ...fixture(), wiktionary: undefined });
+    expect(buckets.get('c')!.CAT).toEqual({ e: [['n', 'feline mammal']], j: ['猫'] });
+    expect(buckets.get('a')!.ARGAN).toBeUndefined();
   });
 });
