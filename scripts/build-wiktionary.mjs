@@ -31,7 +31,7 @@ const wanted = new Set(
 );
 
 function emptyRecord() {
-  return { e: [], b: null, j: [] };
+  return { e: [], b: null, j: [], p: [] };
 }
 
 function absorb(record, entry) {
@@ -41,6 +41,8 @@ function absorb(record, entry) {
   }
   if (record.b === null && entry.base !== null) record.b = entry.base;
   for (const ja of entry.japanese) if (!record.j.includes(ja)) record.j.push(ja);
+  // 同じ語の品詞違いで発音が割れることはほぼ無いので先勝ちで足りる
+  if (record.p.length === 0 && entry.ipa.length > 0) record.p = entry.ipa;
 }
 
 // CATS は「cat の複数形」と略語 CATS の 2 エントリに分かれていて、大文字化するとぶつかる。
@@ -79,6 +81,7 @@ for (const [word, group] of merged) {
   const value = {};
   if (record.e.length > 0) value.e = record.e;
   if (record.b !== null) value.b = record.b;
+  if (record.p.length > 0) value.p = record.p;
   // 和訳はどちらの見出しから来ても使える
   const japanese = [...new Set([...group.lower.j, ...group.upper.j])];
   if (japanese.length > 0) value.j = japanese;
