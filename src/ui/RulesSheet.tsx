@@ -15,7 +15,7 @@ export function RulesSheet({ onDismiss }: { onDismiss: () => void }) {
           <h3 className="text-stone-400 mb-1">手順</h3>
           <ol className="list-decimal list-inside space-y-1">
             <li>タイルをタップしてから盤のマスをタップすると置けます（ドラッグでも置けます）</li>
-            <li>PLAY で確定します。辞書に無い語は手札に戻ります</li>
+            <li>PLAY で確定します。条件を満たさないときはエラーが出て、タイルは盤に残ります</li>
             <li>RECALL で置いたタイルをまとめて手札に戻せます</li>
           </ol>
         </section>
@@ -47,6 +47,7 @@ export function RulesSheet({ onDismiss }: { onDismiss: () => void }) {
           <ul className="list-disc list-inside space-y-1">
             <li>EXCHANGE は袋に 7 枚以上残っているときだけ使えます</li>
             <li>PASS は手番を飛ばします。6 回連続でゲーム終了です</li>
+            <li>袋が空になり、どちらかが手札を使い切るとゲーム終了です</li>
             <li>空白タイルは 2 枚あり、任意の文字として使えますが 0 点です。DL / TL を踏んでも 0 点のままです</li>
             <li>終了時、手札に残ったタイルの点数は自分の得点から引かれます。先に使い切った側には相手の残り点が加算されます</li>
             <li>「直前手」と「履歴」の単語をタップすると、発音記号・英英定義・和訳が出ます</li>
