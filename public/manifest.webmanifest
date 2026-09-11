@@ -1,0 +1,31 @@
+{
+  "name": "Toy Scrabble",
+  "short_name": "Scrabble",
+  "description": "日本人英語学習者向けの Scrabble。置いた単語の英英定義と和訳をその場で引けます。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#1a3d24",
+  "background_color": "#1a3d24",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

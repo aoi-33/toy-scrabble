@@ -34,6 +34,7 @@ npm run test       # unit + component (Vitest)
 
 ## 変更履歴
 
+- **2026-09-11** favicon を追加し、スマートフォンのホーム画面にアプリとして追加できるようにした（Web App Manifest + Service Worker）。アイコンは Flaticon（作者: Icon.doit）。
 - **2026-09-11** 単語の意味が出ないケースを解消。英英定義に Wiktionary を追加し、収録率を 43.9% → 88.9% に改善（2 文字語 100% / 3 文字語 96.8%）。WordNet が持たない機能語（`IF` / `OF` / `AND`）や専門語（`ARGAN`）も引けるようになりました。
 - **2026-09-10** 外部データソースのライセンス表記を README と画面内 About モーダルに追加。あわせて辞書ファイルを実態に合わせ `twl06.txt` → `words.txt` に改名（中身は TWL06 ではなく CC0 の単語リスト）。
 - **2026-09-09** Plan 3 完了: 履歴の単語から英英・英和辞書を引けるようにした。定義は WordNet 3.1 と ejdict からビルド時に生成し（120,435 語 / 計 9.8 MB）、先頭文字ごとの JSON を遅延読み込みする。
@@ -76,6 +77,17 @@ npm run build:wiktionary -- ./kaikki.org-dictionary-English.jsonl
 - スマートフォン（幅 320px 〜）: 手札と操作ボタンは画面下部に固定。タイルは長押しでドラッグ、タップでも配置できます
 - PC（幅 769px 〜）: Enter で PLAY、Escape で仮配置を全て戻す
 
+### ホーム画面に追加する
+
+公開 URL をブラウザで開き、ホーム画面に追加するとアドレスバー無しのアプリとして起動します。
+
+- iOS Safari: 共有 → 「ホーム画面に追加」
+- Android Chrome: メニュー → 「アプリをインストール」
+
+Service Worker（`public/sw.js`）を登録しているのでオフラインでも遊べます。登録は本番ビルドのみで、
+`npm run dev` では HMR と衝突しないよう無効です。キャッシュ方針は `/assets/`（ファイル名にハッシュが
+付く）だけ cache-first、辞書ファイルなどそれ以外は network-first です。
+
 ## ライセンス
 
 このリポジトリのソースコードは MIT ライセンスです。
@@ -89,6 +101,7 @@ npm run build:wiktionary -- ./kaikki.org-dictionary-English.jsonl
 | 英英定義（WordNet に無い語） | [kaikki.org](https://kaikki.org/dictionary/English/) 経由の英語版 [Wiktionary](https://en.wiktionary.org/) | CC BY-SA 3.0（下記） |
 | 和訳 (EJDict) | npm [`ejdict`](https://www.npmjs.com/package/ejdict) → [kujirahand/EJDict](https://github.com/kujirahand/EJDict) | MIT（元データはパブリックドメイン） |
 | Press Start 2P フォント | Google Fonts（CDN 参照） | SIL Open Font License 1.1 |
+| アプリアイコン / favicon | [Flaticon](https://www.flaticon.com/free-icon/letter-a_5584532)（作者: Icon.doit） | Flaticon Free License（作者表示が必要） |
 | `@dnd-kit/core`, `@dnd-kit/utilities` | npm | MIT |
 
 **単語リストは TWL06 / NWL ではありません。** これらは NASPA の専有物でライセンス契約が必要なため使用していません。

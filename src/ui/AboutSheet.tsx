@@ -46,6 +46,12 @@ export function AboutSheet({ onDismiss }: { onDismiss: () => void }) {
           <p>Press Start 2P（SIL Open Font License 1.1）。</p>
         </section>
 
+        {/* Flaticon の無料ライセンスは作者名とサイト名の表示が配布条件 */}
+        <section>
+          <h3 className="text-stone-400 mb-1">アイコン</h3>
+          <p>Icon.doit（www.flaticon.com）のアイコンを使用しています。</p>
+        </section>
+
         <section>
           <h3 className="text-stone-400 mb-1">英英定義: WordNet 3.1</h3>
           <pre className="whitespace-pre-wrap font-mono text-[9px] leading-relaxed text-stone-300">
