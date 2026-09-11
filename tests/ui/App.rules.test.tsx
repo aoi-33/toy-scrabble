@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useState, useCallback } from 'react';
 import type { Move } from '../../src/game/types';
 
@@ -62,5 +62,31 @@ describe('App のルール表示', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'RULES' }));
     fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('ゲーム開始後もヘッダーの ? からルールを開ける', async () => {
+    render(<App />);
+    const free = await screen.findByLabelText('mode-free');
+    await waitFor(() => expect(free).not.toBeDisabled());
+    fireEvent.click(free);
+    await screen.findByLabelText('cell-7-7');
+
+    fireEvent.click(screen.getByRole('button', { name: 'ルールを見る' }));
+    expect(screen.getByRole('dialog', { name: 'RULES' })).toBeInTheDocument();
+  });
+
+  // ActionBar は COM の手番中に親ごと pointer-events-none になる。
+  // ルールの導線をそこに置くと思考中に読めなくなるので、ヘッダーにあることを固定する
+  it('COM の思考中でもルールを開ける', async () => {
+    render(<App />);
+    const easy = await screen.findByLabelText('mode-com-easy');
+    await waitFor(() => expect(easy).not.toBeDisabled());
+    fireEvent.click(easy);
+
+    fireEvent.click(screen.getByText('PASS'));
+    await screen.findByText('🤖 COM 思考中…');
+
+    fireEvent.click(screen.getByRole('button', { name: 'ルールを見る' }));
+    expect(screen.getByRole('dialog', { name: 'RULES' })).toBeInTheDocument();
   });
 });

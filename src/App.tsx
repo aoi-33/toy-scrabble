@@ -254,7 +254,17 @@ function GameShell() {
         data-testid="app-shell"
         className="min-h-[100dvh] flex flex-col items-center gap-3 p-2 md:p-4"
       >
-        <h1 className="font-pixel text-base md:text-xl">Toy Scrabble</h1>
+        <div className="w-full relative flex items-center justify-center">
+          <h1 className="font-pixel text-base md:text-xl">Toy Scrabble</h1>
+          <button
+            type="button"
+            onClick={() => setShowRules(true)}
+            aria-label="ルールを見る"
+            className="absolute right-0 font-pixel text-xs text-stone-400 hover:text-stone-200 min-h-[44px] min-w-[44px]"
+          >
+            ?
+          </button>
+        </div>
         <ScorePanel
           p1Score={state.players[0].score}
           comScore={state.players[1].score}
@@ -403,6 +413,7 @@ function GameShell() {
           onDismiss={() => setSelectedWord(null)}
         />
       )}
+      {showRules && <RulesSheet onDismiss={() => setShowRules(false)} />}
     </DndContext>
   );
 }
