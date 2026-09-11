@@ -13,7 +13,7 @@ const POS_ORDER = ['n', 'v', 'a', 'r'];
  * @param {Map<string, string[]>} input.japanese 大文字見出し → 和訳
  * @param {Map<string, string>} input.irregularVerbs 活用形 → 原形
  * @param {Set<string>} input.knownLemmas WordNet 見出し語（小文字）
- * @param {Map<string, {e?: [string, string][], b?: string, j?: string[]}>} [input.wiktionary]
+ * @param {Map<string, {e?: [string, string][], b?: string, j?: string[], p?: [string, string][]}>} [input.wiktionary]
  *        大文字見出し → Wiktionary 由来の定義。WordNet が持たない語を埋める
  * @returns {Map<string, Record<string, object>>} 先頭文字（小文字）→ バケット
  */
@@ -91,12 +91,25 @@ export function buildBuckets({
     return start;
   }
 
+  /**
+   * バケットに書き込む発音。語自身のものを優先し、無ければ原形のものを使う。
+   * 原形が同じバケットにあるならローダが実行時に辿れるのでコピーしない。
+   * 別バケットだと追加 fetch できないので、ここでコピーしておく（e / j と同じ扱い）。
+   */
+  function ipaFor(word, base) {
+    const own = wiktionary.get(word)?.p ?? [];
+    if (own.length > 0) return own;
+    if (!base || base[0] === word[0]) return [];
+    return wiktionary.get(base)?.p ?? [];
+  }
+
   /** 空の配列はファイルサイズを食うだけなので落とす */
-  function compact(body, base) {
+  function compact(body, base, ipa) {
     const out = {};
     if (base) out.b = base;
     if (body.e.length > 0) out.e = body.e;
     if (body.j.length > 0) out.j = body.j;
+    if (ipa.length > 0) out.p = ipa;
     return out;
   }
 
@@ -108,7 +121,7 @@ export function buildBuckets({
     // 自分自身の定義があるならそれを載せる。屈折形でもあるなら原形も併記する
     const own = bodyOf(word);
     if (own) {
-      bucketFor(word[0].toLowerCase())[word] = compact(own, base);
+      bucketFor(word[0].toLowerCase())[word] = compact(own, base, ipaFor(word, base));
       continue;
     }
     if (!base) continue;
@@ -119,11 +132,12 @@ export function buildBuckets({
     const bucket = bucketFor(word[0].toLowerCase());
     if (base[0] === word[0]) {
       // 原形が word-list に無いと参照が宙に浮くので、実体を必ず同時に書く
-      bucket[base] = compact(body);
-      bucket[word] = { b: base };
+      bucket[base] = compact(body, null, ipaFor(base, null));
+      const ipa = ipaFor(word, base);
+      bucket[word] = ipa.length > 0 ? { b: base, p: ipa } : { b: base };
     } else {
       // 別バケットの原形はローダが追加 fetch できないので実体をコピーする
-      bucket[word] = compact(body, base);
+      bucket[word] = compact(body, base, ipaFor(word, base));
     }
   }
   return buckets;

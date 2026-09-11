@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest';
 
 const BUCKETS_PATH = '../../scripts/lib/buckets.mjs';
 
-type Definition = { b?: string; e?: [string, string][]; j?: string[] };
+type Definition = {
+  b?: string;
+  e?: [string, string][];
+  j?: string[];
+  p?: ['uk' | 'us' | 'x', string][];
+};
 
 async function loadBuckets(): Promise<{
   buildBuckets: (input: {
@@ -168,6 +173,77 @@ describe('buildBuckets', () => {
     const buckets = buildBuckets({ ...fixture(), wiktionary: undefined });
     expect(buckets.get('c')!.CAT).toEqual({ e: [['n', 'feline mammal']], j: ['猫'] });
     expect(buckets.get('a')!.ARGAN).toBeUndefined();
+  });
+
+  it('語が自分の発音を持つならバケットに載せる', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ARGAN'];
+    input.wiktionary.set('ARGAN', {
+      e: [['n', 'A Moroccan tree.']],
+      p: [['x', '/ˈɑː(ɹ)ɡən/']],
+    });
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ARGAN).toEqual({
+      e: [['n', 'A Moroccan tree.']],
+      p: [['x', '/ˈɑː(ɹ)ɡən/']],
+    });
+  });
+
+  // 屈折形は原形と発音が違う（ARGAN と ARGANS）。自分のものがあるなら原形で上書きしない
+  it('同じバケット内の屈折形は自分の発音を持つ', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ARGANS'];
+    input.wiktionary.set('ARGAN', {
+      e: [['n', 'A Moroccan tree.']],
+      p: [['x', '/ˈɑː(ɹ)ɡən/']],
+    });
+    input.wiktionary.set('ARGANS', { b: 'ARGAN', p: [['x', '/ˈɑː(ɹ)ɡənz/']] });
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ARGANS).toEqual({ b: 'ARGAN', p: [['x', '/ˈɑː(ɹ)ɡənz/']] });
+    expect(buckets.get('a')!.ARGAN).toEqual({
+      e: [['n', 'A Moroccan tree.']],
+      p: [['x', '/ˈɑː(ɹ)ɡən/']],
+    });
+  });
+
+  // 同じバケットならローダが実行時に原形をたどれるので、コピーして重複させない
+  it('同じバケット内なら原形の発音をコピーしない', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ARGANS'];
+    input.wiktionary.set('ARGAN', {
+      e: [['n', 'A Moroccan tree.']],
+      p: [['x', '/ˈɑː(ɹ)ɡən/']],
+    });
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ARGANS).toEqual({ b: 'ARGAN' });
+  });
+
+  // ローダは lookup 中に別バケットを追加 fetch しない。WENT は w.json、GO は g.json
+  it('バケットを跨ぐ屈折形には原形の発音をコピーする', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.wiktionary.set('GO', { p: [['x', '/ɡəʊ/']] });
+    const buckets = buildBuckets(input);
+    expect(buckets.get('w')!.WENT).toEqual({
+      b: 'GO',
+      e: [['v', 'change location']],
+      j: ['行く'],
+      p: [['x', '/ɡəʊ/']],
+    });
+  });
+
+  // 発音だけの語を載せると playableWords が「意味の出ない語」を遊べる語として残してしまう
+  it('発音しか無い語はバケットに載せない', async () => {
+    const { buildBuckets, playableWords } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ZYME'];
+    input.wiktionary.set('ZYME', { p: [['x', '/zaɪm/']] });
+    const buckets = buildBuckets(input);
+    expect(buckets.get('z')).toBeUndefined();
+    expect(playableWords(input.words, buckets)).not.toContain('ZYME');
   });
 });
 
