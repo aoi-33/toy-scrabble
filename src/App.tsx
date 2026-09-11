@@ -143,7 +143,7 @@ function GameShell() {
 
   if (state.status === 'setup') {
     return (
-      <div className="min-h-[100dvh] p-4 md:p-6 text-center flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[100dvh] p-4 md:p-6 pt-[max(1rem,env(safe-area-inset-top))] md:pt-[max(1.5rem,env(safe-area-inset-top))] text-center flex flex-col items-center justify-center gap-4">
         <h1 className="font-pixel text-2xl mb-2">Toy Scrabble</h1>
         <p className="font-pixel text-[10px] text-stone-400 mb-2">
           モードを選択してください
@@ -183,7 +183,7 @@ function GameShell() {
     const [p1, com] = state.players;
     const winner = p1.score > com.score ? 'P1' : com.score > p1.score ? 'COM' : 'DRAW';
     return (
-      <div className="min-h-[100dvh] p-4 md:p-6 text-center flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[100dvh] p-4 md:p-6 pt-[max(1rem,env(safe-area-inset-top))] md:pt-[max(1.5rem,env(safe-area-inset-top))] text-center flex flex-col items-center justify-center gap-4">
         <h1 className="font-pixel text-2xl">GAME OVER</h1>
         <div className="font-pixel">
           {winner === 'DRAW' ? 'DRAW' : `${winner} WINS!`}
@@ -249,10 +249,12 @@ function GameShell() {
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      {/* min-h-screen(100vh) はモバイルでアドレスバー分ずれるので dvh を使う */}
+      {/* min-h-screen(100vh) はモバイルでアドレスバー分ずれるので dvh を使う。
+          ホーム画面から起動すると viewport-fit=cover でノッチの下まで描画されるため、
+          上端はセーフエリアぶん空ける（下端は play-footer 側で同じことをしている） */}
       <div
         data-testid="app-shell"
-        className="min-h-[100dvh] flex flex-col items-center gap-3 p-2 md:p-4"
+        className="min-h-[100dvh] flex flex-col items-center gap-3 p-2 md:p-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-[max(1rem,env(safe-area-inset-top))]"
       >
         <div className="w-full relative flex items-center justify-center">
           <h1 className="font-pixel text-base md:text-xl">Toy Scrabble</h1>

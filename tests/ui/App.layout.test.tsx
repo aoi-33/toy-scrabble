@@ -61,4 +61,12 @@ describe('App のモバイルレイアウト', () => {
     expect(shell.className).toContain('min-h-[100dvh]');
     expect(shell.className).not.toContain('min-h-screen');
   });
+
+  it('ノッチと重ならないよう上端にセーフエリアぶんの余白を取る', async () => {
+    await startFreePlay();
+    const shell = screen.getByTestId('app-shell');
+    // index.html の viewport-fit=cover と black-translucent により、
+    // ホーム画面から起動すると webview がステータスバーの下まで広がる
+    expect(shell.className).toContain('pt-[max(0.5rem,env(safe-area-inset-top))]');
+  });
 });
