@@ -1,7 +1,10 @@
 import { Sheet } from './Sheet';
 import { useDefinition } from '../lookup/useDefinition';
 import type { DictLoader } from '../lookup/dictLoader';
-import type { Pos } from '../lookup/types';
+import type { Accent, Pos } from '../lookup/types';
+
+/** アクセントの表示ラベル。2 件並ぶときだけ引く（x は 2 件側に現れない） */
+const ACCENT_LABEL: Record<Accent, string> = { uk: 'UK', us: 'US', x: '' };
 
 /** 品詞コードの表示ラベル。辞書の慣習に合わせた英語の略記 */
 const POS_LABEL: Record<Pos, string> = {
@@ -61,6 +64,20 @@ export function DefinitionSheet({
             {state.base && (
               <p className="text-stone-400">
                 {state.word} ← {state.base}
+              </p>
+            )}
+            {state.pronunciation.length > 0 && (
+              // Press Start 2P は ASCII しか持たず ə ʊ ɹ ː が別フォントに落ちて字面が
+              // 崩れるので、この行だけ font-pixel を外す（AboutSheet の和文と同じ理由）
+              <p data-testid="pronunciation" className="font-mono text-stone-400">
+                {state.pronunciation.map(([accent, ipa]) => (
+                  <span key={accent} className="mr-3">
+                    {state.pronunciation.length > 1 && (
+                      <span className="text-stone-500">{ACCENT_LABEL[accent]} </span>
+                    )}
+                    <span>{ipa}</span>
+                  </span>
+                ))}
               </p>
             )}
             {state.english.length > 0 && (

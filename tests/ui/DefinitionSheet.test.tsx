@@ -23,6 +23,27 @@ const CAT: LookupResult = {
 
 const CATS: LookupResult = { ...CAT, word: 'CATS', base: 'CAT' };
 
+const PHONE: LookupResult = {
+  kind: 'found',
+  word: 'PHONE',
+  base: null,
+  english: [['n', 'a device']],
+  japanese: [],
+  pronunciation: [
+    ['uk', '/fəʊn/'],
+    ['us', '/foʊn/'],
+  ],
+};
+
+const ZA: LookupResult = {
+  kind: 'found',
+  word: 'ZA',
+  base: null,
+  english: [['n', 'pizza']],
+  japanese: [],
+  pronunciation: [['x', '/zɑː/']],
+};
+
 describe('DefinitionSheet', () => {
   it('取得中はスケルトンを出す', () => {
     // 解決しない Promise で loading に留める
@@ -93,5 +114,34 @@ describe('DefinitionSheet', () => {
   it('シートのタイトルは単語そのもの', async () => {
     render(<DefinitionSheet loader={loaderOf(CAT)} word="CAT" onDismiss={() => {}} />);
     expect(screen.getByRole('dialog', { name: 'CAT' })).toBeInTheDocument();
+  });
+
+  it('UK と US が両方あればラベル付きで並べる', async () => {
+    render(<DefinitionSheet loader={loaderOf(PHONE)} word="PHONE" onDismiss={() => {}} />);
+    const line = await screen.findByTestId('pronunciation');
+    expect(line).toHaveTextContent('UK /fəʊn/');
+    expect(line).toHaveTextContent('US /foʊn/');
+  });
+
+  // 単独表記にラベルを付けると「もう一方が存在する」と誤解させる
+  it('1 件だけならラベルを付けない', async () => {
+    render(<DefinitionSheet loader={loaderOf(ZA)} word="ZA" onDismiss={() => {}} />);
+    const line = await screen.findByTestId('pronunciation');
+    expect(line).toHaveTextContent('/zɑː/');
+    expect(line.textContent).toBe('/zɑː/');
+  });
+
+  it('発音が無ければ行ごと出さない', async () => {
+    render(<DefinitionSheet loader={loaderOf(CAT)} word="CAT" onDismiss={() => {}} />);
+    await screen.findByText('feline mammal');
+    expect(screen.queryByTestId('pronunciation')).not.toBeInTheDocument();
+  });
+
+  // Press Start 2P は ASCII しか持たず ə ʊ ɹ ː が別フォントに落ちて字面が崩れる
+  it('発音行では font-pixel を使わない', async () => {
+    render(<DefinitionSheet loader={loaderOf(PHONE)} word="PHONE" onDismiss={() => {}} />);
+    const line = await screen.findByTestId('pronunciation');
+    expect(line).toHaveClass('font-mono');
+    expect(line).not.toHaveClass('font-pixel');
   });
 });
