@@ -14,6 +14,10 @@ async function loadBuckets(): Promise<{
     knownLemmas: Set<string>;
     wiktionary?: Map<string, Definition>;
   }) => Map<string, Record<string, Definition>>;
+  playableWords: (
+    words: string[],
+    buckets: Map<string, Record<string, Definition>>,
+  ) => string[];
 }> {
   return await import(BUCKETS_PATH);
 }
@@ -51,6 +55,9 @@ function fixture() {
       ['OX', { e: [['n', 'A castrated bull.']] }],
       // WordNet と重なる語。語義が短い WordNet を優先したい
       ['CAT', { e: [['n', 'An animal of the family Felidae kept as a pet.']] }],
+      // 実体を持たない中継点。ABOLISHERS → ABOLISHER → ABOLISH と二段になる
+      ['ABOLISH', { e: [['v', 'To end something.']] }],
+      ['ABOLISHER', { b: 'ABOLISH' }],
     ]),
   };
 }
@@ -128,6 +135,27 @@ describe('buildBuckets', () => {
     expect(buckets.get('o')!.OX).toEqual({ e: [['n', 'A castrated bull.']] });
   });
 
+  // Wiktionary にしか無い語（ARGAN）の屈折形。Wiktionary 側に ARGANS の項目は無いので、
+  // lemmatize が ARGAN を原形として認められないと丸ごと落ちてしまう
+  it('Wiktionary にしか無い語の屈折形も原形にリンクする', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ARGANS'];
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ARGANS).toEqual({ b: 'ARGAN' });
+    expect(buckets.get('a')!.ARGAN).toEqual({ e: [['n', 'A Moroccan tree.']] });
+  });
+
+  // 原形が「別語への参照」でしかないと、そこで行き止まりになって屈折形が落ちてしまう
+  it('参照が二段になっていても実体を持つ語まで辿る', async () => {
+    const { buildBuckets } = await loadBuckets();
+    const input = fixture();
+    input.words = [...input.words, 'ABOLISHERS'];
+    const buckets = buildBuckets(input);
+    expect(buckets.get('a')!.ABOLISHERS).toEqual({ b: 'ABOLISH' });
+    expect(buckets.get('a')!.ABOLISH).toEqual({ e: [['v', 'To end something.']] });
+  });
+
   // Wiktionary の語義は長い。両方ある語では短い WordNet を使ってバケットを軽く保つ
   it('WordNet と Wiktionary の両方にある語は WordNet を使う', async () => {
     const { buildBuckets } = await loadBuckets();
@@ -140,5 +168,34 @@ describe('buildBuckets', () => {
     const buckets = buildBuckets({ ...fixture(), wiktionary: undefined });
     expect(buckets.get('c')!.CAT).toEqual({ e: [['n', 'feline mammal']], j: ['猫'] });
     expect(buckets.get('a')!.ARGAN).toBeUndefined();
+  });
+});
+
+// 意味を出せない語は盤に置けないようにする。学習者向けなので「引けない語で得点できる」より
+// 「置ける語は必ず意味が出る」を優先する方針
+describe('playableWords', () => {
+  it('定義が引けた語だけを残す', async () => {
+    const { buildBuckets, playableWords } = await loadBuckets();
+    const input = fixture();
+    const buckets = buildBuckets(input);
+    expect(playableWords(input.words, buckets)).toEqual([
+      'CAT',
+      'CATS',
+      'GO',
+      'WENT',
+      'HOPE',
+      'IF',
+      'ABACI',
+    ]);
+  });
+
+  // 参照先として書き込んだ原形は、元の単語リストに無いなら遊べる語ではない
+  it('参照のために書き足した原形は増やさない', async () => {
+    const { buildBuckets, playableWords } = await loadBuckets();
+    const input = fixture();
+    input.words = ['CATS'];
+    const buckets = buildBuckets(input);
+    expect(buckets.get('c')!.CAT).toBeDefined();
+    expect(playableWords(input.words, buckets)).toEqual(['CATS']);
   });
 });

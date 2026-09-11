@@ -9,7 +9,7 @@
 1. ホーム画面で `FREE PLAY` / `COM EASY` / `COM MEDIUM` / `COM HARD` から選択してゲーム開始
 2. COM 対戦時、相手の手番中は "🤖 COM 思考中…" が表示され、Rack と ActionBar がロックされます
 3. 手札のタイルをクリック → 空マスをクリック、または手札をドラッグしてマスに置く
-4. すべてのタイルを置いたら `PLAY` を押す（274,137 語の英単語リストで検証）
+4. すべてのタイルを置いたら `PLAY` を押す（259,278 語の英単語リストで検証）
 5. `RECALL` で全ての pending タイルを手札に戻す
 6. `EXCHANGE` で手札の一部を袋のタイルと入れ替える（袋残 7 枚以上のとき）
 7. `PASS` でターンをスキップ（6 連続で終了）
@@ -34,6 +34,7 @@ npm run test       # unit + component (Vitest)
 
 ## 変更履歴
 
+- **2026-09-11** 意味を出せない語（`GIE` など Scots 由来や Collins 特有の語 14,859 語）を単語リストから除外し、playable な語の収録率を 100% にした。あわせて Wiktionary にしか無い語の屈折形（`ABOLISHERS` → `ABOLISH`）を原形にリンクできていなかったバグを修正。playable 274,137 → 259,278 語。
 - **2026-09-11** favicon を追加し、スマートフォンのホーム画面にアプリとして追加できるようにした（Web App Manifest + Service Worker）。アイコンは Flaticon（作者: Icon.doit）。
 - **2026-09-11** 単語の意味が出ないケースを解消。英英定義に Wiktionary を追加し、収録率を 43.9% → 88.9% に改善（2 文字語 100% / 3 文字語 96.8%）。WordNet が持たない機能語（`IF` / `OF` / `AND`）や専門語（`ARGAN`）も引けるようになりました。
 - **2026-09-10** 外部データソースのライセンス表記を README と画面内 About モーダルに追加。あわせて辞書ファイルを実態に合わせ `twl06.txt` → `words.txt` に改名（中身は TWL06 ではなく CC0 の単語リスト）。
@@ -63,6 +64,11 @@ npm run test       # unit + component (Vitest)
 辞書ファイル `public/dict/words.txt` は `.gitignore` 済みですが、`prebuild` が npm の `word-list` パッケージから毎回生成するため CI でも同じものが作られます。
 
 定義ファイル `public/dict/defs/{a..z}.json` も `.gitignore` 済みですが、同じく `prebuild` が `wordnet-db`・`ejdict`・`data/wiktionary.json` から毎回生成します。
+
+`build-defs.mjs` は定義を書き出したあと、**意味を出せなかった語を `words.txt` から削ります**。
+元の 274,137 語には `GIE`（Scots）や `ZEX` のように英語辞書に載っていない語が 14,859 語あり、
+盤に置けても意味が出ないと学習用途で困るためです。結果として playable な語は 259,278 語、
+そのすべてに英英か和訳が付きます（収録率 100%）。
 
 `data/wiktionary.json` は生成物ですが**リポジトリにコミットしています**（15 MB）。元になる kaikki.org の
 JSONL が 3.3 GB あり CI で毎回落とすのは現実的でないためです。更新したいときだけ手元で次を実行します。
@@ -96,7 +102,7 @@ Service Worker（`public/sw.js`）を登録しているのでオフラインで�
 
 | 資産 | ソース | ライセンス |
 |---|---|---|
-| 英単語リスト (274,137 語) | npm [`word-list`](https://www.npmjs.com/package/word-list) → [atebits/Words](https://github.com/atebits/Words) | パッケージは MIT、元データは CC0-1.0 |
+| 英単語リスト (259,278 語) | npm [`word-list`](https://www.npmjs.com/package/word-list) → [atebits/Words](https://github.com/atebits/Words) | パッケージは MIT、元データは CC0-1.0 |
 | 英英定義 (WordNet 3.1) | npm [`wordnet-db`](https://www.npmjs.com/package/wordnet-db)（Princeton University） | WordNet License（下記） |
 | 英英定義（WordNet に無い語） | [kaikki.org](https://kaikki.org/dictionary/English/) 経由の英語版 [Wiktionary](https://en.wiktionary.org/) | CC BY-SA 3.0（下記） |
 | 和訳 (EJDict) | npm [`ejdict`](https://www.npmjs.com/package/ejdict) → [kujirahand/EJDict](https://github.com/kujirahand/EJDict) | MIT（元データはパブリックドメイン） |

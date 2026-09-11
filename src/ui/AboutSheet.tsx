@@ -30,8 +30,8 @@ export function AboutSheet({ onDismiss }: { onDismiss: () => void }) {
         <section>
           <h3 className="text-stone-400 mb-1">単語リスト</h3>
           <p>
-            274,137 語。npm word-list（元データは atebits/Words）を使用。
-            パッケージは MIT、元データは CC0-1.0 です。
+            259,278 語。npm word-list（元データは atebits/Words）の 274,137 語から、
+            意味を表示できない語を除いています。パッケージは MIT、元データは CC0-1.0 です。
             公式トーナメント辞書の TWL06 / NWL は使っていません。
           </p>
         </section>

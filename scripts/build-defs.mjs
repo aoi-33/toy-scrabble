@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { parseIndex, parseData } from './lib/wordnet.mjs';
 import { parseEjdictBucket, parseIrregularVerbs } from './lib/ejdict.mjs';
-import { buildBuckets } from './lib/buckets.mjs';
+import { buildBuckets, playableWords } from './lib/buckets.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
@@ -52,7 +52,8 @@ const wiktionary = new Map(
   Object.entries(JSON.parse(readFileSync(resolve(rootDir, 'data/wiktionary.json'), 'utf8'))),
 );
 
-const words = readFileSync(resolve(rootDir, 'public/dict/words.txt'), 'utf8').split(/\r?\n/);
+const wordsPath = resolve(rootDir, 'public/dict/words.txt');
+const words = readFileSync(wordsPath, 'utf8').split(/\r?\n/);
 const buckets = buildBuckets({
   words,
   index,
@@ -76,4 +77,14 @@ for (const letter of LETTERS) {
 
 console.log(
   `✓ wrote ${totalEntries.toLocaleString()} entries (${(totalBytes / 1e6).toFixed(1)} MB) to ${outDir}`,
+);
+
+// 意味を出せない語は盤に置けないようにする。単語リスト（Collins 系）には GIE のような
+// 英語辞書に載っていない方言語が多数あり、置けても意味が出ないと学習用途で困るため。
+const playable = playableWords(words, buckets);
+writeFileSync(wordsPath, playable.join('\n') + '\n', 'utf8');
+console.log(
+  `✓ pruned words.txt to ${playable.length.toLocaleString()} playable words (dropped ${(
+    words.filter(w => w.trim().length > 0).length - playable.length
+  ).toLocaleString()})`,
 );

@@ -29,6 +29,11 @@ export function buildBuckets({
   const buckets = new Map();
   const bodyCache = new Map();
 
+  // lemmatize は Set に載っている語しか原形と認めない。WordNet 見出しだけで検証すると
+  // Wiktionary でしか引けない語（ARGAN / ABOLISHER）が屈折形からたどれず丸ごと落ちる。
+  const lemmas = new Set(knownLemmas);
+  for (const word of wiktionary.keys()) lemmas.add(word.toLowerCase());
+
   function bucketFor(letter) {
     let bucket = buckets.get(letter);
     if (!bucket) {
@@ -63,12 +68,27 @@ export function buildBuckets({
 
   /** 原形。語自身が原形なら null */
   function baseOf(word) {
-    // lemmatize は WordNet の見出し語でしか検証しないので、WordNet に無い語では null になる。
-    // Wiktionary は「plural of ...」を form_of として持つので、そちらで補う。
-    const lemma = lemmatize(word, knownLemmas, irregularVerbs);
-    if (lemma && lemma !== word) return lemma;
-    const base = wiktionary.get(word)?.b;
-    return base && base !== word ? base : null;
+    // 接尾辞剥がしで解けない不規則形は、Wiktionary が持つ「plural of ...」で補う。
+    const lemma = lemmatize(word, lemmas, irregularVerbs);
+    const direct = lemma && lemma !== word ? lemma : wiktionary.get(word)?.b;
+    if (!direct || direct === word) return null;
+    return withBody(direct, word);
+  }
+
+  /**
+   * 定義の実体を持つ語まで参照を辿る。Wiktionary の原形がさらに別語への参照でしかないことがあり
+   * （ABOLISHERS → ABOLISHER → ABOLISH）、そこで止めると屈折形が丸ごと落ちる。
+   * 実体が見つからなければ最初の候補を返し、呼び出し側の判定に任せる。
+   */
+  function withBody(start, origin) {
+    const seen = new Set([origin]);
+    let current = start;
+    while (current && !seen.has(current)) {
+      if (bodyOf(current)) return current;
+      seen.add(current);
+      current = wiktionary.get(current)?.b;
+    }
+    return start;
   }
 
   /** 空の配列はファイルサイズを食うだけなので落とす */
@@ -107,4 +127,23 @@ export function buildBuckets({
     }
   }
   return buckets;
+}
+
+/**
+ * 遊べる語（＝意味を出せる語）だけに絞り込む。
+ * buildBuckets は原形を参照させるために単語リストに無い語も書き足すので、
+ * バケットの鍵をそのまま使わず元のリストを基準に数える。
+ *
+ * @param {string[]} words buildBuckets に渡したのと同じ見出し候補
+ * @param {Map<string, Record<string, object>>} buckets buildBuckets の戻り値
+ * @returns {string[]} 大文字の見出し。入力の順序を保つ
+ */
+export function playableWords(words, buckets) {
+  const out = [];
+  for (const raw of words) {
+    const word = String(raw).trim().toUpperCase();
+    if (!/^[A-Z]+$/.test(word)) continue;
+    if (buckets.get(word[0].toLowerCase())?.[word]) out.push(word);
+  }
+  return out;
 }
