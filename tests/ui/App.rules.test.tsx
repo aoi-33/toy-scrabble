@@ -86,7 +86,12 @@ describe('App のルール表示', () => {
     fireEvent.click(screen.getByText('PASS'));
     await screen.findByText('🤖 COM 思考中…');
 
-    fireEvent.click(screen.getByRole('button', { name: 'ルールを見る' }));
+    const rulesButton = screen.getByRole('button', { name: 'ルールを見る' });
+    // jsdom は pointer-events を fireEvent.click に反映しないので、クリックが通ること
+    // だけでは配置場所を保証できない。無効化される祖先の下に無いことを直接見る
+    expect(rulesButton.closest('.pointer-events-none')).toBeNull();
+
+    fireEvent.click(rulesButton);
     expect(screen.getByRole('dialog', { name: 'RULES' })).toBeInTheDocument();
   });
 });
