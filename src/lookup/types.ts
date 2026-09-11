@@ -22,6 +22,12 @@ export type Pos =
 /** 英英定義 1 件。[品詞, 定義文] */
 export type EnglishSense = [Pos, string];
 
+/** 発音のアクセント。x はタグの無い単一表記 */
+export type Accent = 'uk' | 'us' | 'x';
+
+/** 発音 1 件。[アクセント, IPA] */
+export type Pronunciation = [Accent, string];
+
 /** バケット JSON の 1 エントリ（spec §5） */
 export type Definition = {
   /** 原形。語自身が原形なら持たない */
@@ -30,6 +36,8 @@ export type Definition = {
   e?: EnglishSense[];
   /** 和訳。最大 3 件 */
   j?: string[];
+  /** 発音記号。UK/US 両方あれば 2 件、無ければ 1 件 */
+  p?: Pronunciation[];
 };
 
 /** 先頭文字ごとのバケット。キーは大文字の語 */
@@ -55,6 +63,7 @@ export type LookupResult =
       base: string | null;
       english: EnglishSense[];
       japanese: string[];
+      pronunciation: Pronunciation[];
     }
   | { kind: 'not-found' }
   | { kind: 'error' };

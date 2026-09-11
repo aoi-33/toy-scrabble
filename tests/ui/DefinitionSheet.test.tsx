@@ -18,6 +18,7 @@ const CAT: LookupResult = {
     ['v', 'to flog with a cat-o-nine-tails'],
   ],
   japanese: ['猫', 'ネコ科の動物'],
+  pronunciation: [],
 };
 
 const CATS: LookupResult = { ...CAT, word: 'CATS', base: 'CAT' };
@@ -53,6 +54,7 @@ describe('DefinitionSheet', () => {
         ['x', 'A particle.'],
       ],
       japanese: [],
+      pronunciation: [],
     };
     render(<DefinitionSheet loader={loaderOf(IF)} word="IF" onDismiss={() => {}} />);
     expect(await screen.findByText('Supposing that, assuming that.')).toBeInTheDocument();

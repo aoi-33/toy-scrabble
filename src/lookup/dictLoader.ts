@@ -59,12 +59,17 @@ export function createDictLoader(
     const resolved = resolveEntry(bucket, entry);
     if (!resolved) return { kind: 'not-found' };
 
+    // 発音は定義とは別軸で解く。CATS のように自分の発音を持ちつつ定義は原形経由の語がある。
+    // 原形は 1 段だけ辿れば足りる（b は buckets.mjs が実体を指すよう正規化済み）
+    const pronunciation = entry.p ?? (entry.b ? (bucket[entry.b]?.p ?? []) : []);
+
     return {
       kind: 'found',
       word: target,
       base: entry.b && entry.b !== target ? entry.b : null,
       english: resolved.e ?? [],
       japanese: resolved.j ?? [],
+      pronunciation,
     };
   }
 

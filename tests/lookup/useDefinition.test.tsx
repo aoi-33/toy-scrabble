@@ -10,6 +10,7 @@ const FOUND: LookupResult = {
   base: null,
   english: [['n', 'feline mammal']],
   japanese: ['猫'],
+  pronunciation: [],
 };
 
 function loaderOf(...results: LookupResult[]): DictLoader & { lookup: ReturnType<typeof vi.fn> } {

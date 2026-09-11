@@ -12,6 +12,20 @@ const W_BUCKET: Bucket = {
   WENT: { b: 'GO', e: [['v', 'change location']], j: ['行く'] },
 };
 
+const P_BUCKET: Bucket = {
+  PHONE: {
+    e: [['n', 'a device']],
+    p: [
+      ['uk', '/fəʊn/'],
+      ['us', '/foʊn/'],
+    ],
+  },
+  // 自分の発音を持つが定義は原形経由。CATS が実データでこの形になる
+  PHONES: { b: 'PHONE', p: [['x', '/fəʊnz/']] },
+  // 自分の発音を持たない屈折形
+  PHONED: { b: 'PHONE' },
+};
+
 function okFetch(buckets: Record<string, Bucket>): FetchLike {
   return vi.fn(async (url: string) => {
     const letter = url.slice(url.length - 6, url.length - 5);
@@ -31,6 +45,7 @@ describe('createDictLoader', () => {
       base: null,
       english: [['n', 'feline mammal']],
       japanese: ['猫'],
+      pronunciation: [],
     });
   });
 
@@ -43,6 +58,7 @@ describe('createDictLoader', () => {
       base: 'CAT',
       english: [['n', 'feline mammal']],
       japanese: ['猫'],
+      pronunciation: [],
     });
   });
 
@@ -56,6 +72,7 @@ describe('createDictLoader', () => {
       base: 'GO',
       english: [['v', 'change location']],
       japanese: ['行く'],
+      pronunciation: [],
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
@@ -111,5 +128,51 @@ describe('createDictLoader', () => {
     const loader = createDictLoader(fetchImpl);
     expect(await loader.lookup('')).toEqual({ kind: 'not-found' });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('自分の発音を持つ語はそれを返す', async () => {
+    const loader = createDictLoader(okFetch({ p: P_BUCKET }));
+    const result = await loader.lookup('PHONE');
+    expect(result).toEqual({
+      kind: 'found',
+      word: 'PHONE',
+      base: null,
+      english: [['n', 'a device']],
+      japanese: [],
+      pronunciation: [
+        ['uk', '/fəʊn/'],
+        ['us', '/foʊn/'],
+      ],
+    });
+  });
+
+  // 発音は定義とは別軸。定義を原形から借りていても発音は自分のものを優先する
+  it('定義が原形経由でも発音は自分のものを使う', async () => {
+    const loader = createDictLoader(okFetch({ p: P_BUCKET }));
+    const result = await loader.lookup('PHONES');
+    expect(result).toEqual({
+      kind: 'found',
+      word: 'PHONES',
+      base: 'PHONE',
+      english: [['n', 'a device']],
+      japanese: [],
+      pronunciation: [['x', '/fəʊnz/']],
+    });
+  });
+
+  it('自分の発音が無ければ原形の発音で代用する', async () => {
+    const loader = createDictLoader(okFetch({ p: P_BUCKET }));
+    const result = await loader.lookup('PHONED');
+    expect(result).toEqual({
+      kind: 'found',
+      word: 'PHONED',
+      base: 'PHONE',
+      english: [['n', 'a device']],
+      japanese: [],
+      pronunciation: [
+        ['uk', '/fəʊn/'],
+        ['us', '/foʊn/'],
+      ],
+    });
   });
 });
