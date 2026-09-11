@@ -114,7 +114,7 @@ function GameShell() {
     (state.mode === 'free' || state.players[state.currentPlayerIndex].id !== 'COM');
   // シート表示中はショートカットを止める。Escape は Sheet 側が「閉じる」に使う
   const isSheetOpen =
-    pendingBlank !== null || showExchange || selectedWord !== null || showAbout;
+    pendingBlank !== null || showExchange || selectedWord !== null || showAbout || showRules;
 
   useEffect(() => {
     if (!isDesktop || !isHumanTurn || isSheetOpen) return;

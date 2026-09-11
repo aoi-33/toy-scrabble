@@ -94,4 +94,17 @@ describe('キーボードショートカット', () => {
     // 仮配置は残っている（RECALL が有効なまま）
     expect(screen.getByRole('button', { name: 'RECALL' })).not.toBeDisabled();
   });
+
+  it('ルール表示中の Enter は PLAY を起こさない', async () => {
+    stubMatchMedia(true);
+    await startAndPlaceOneTile();
+
+    fireEvent.click(screen.getByRole('button', { name: 'ルールを見る' }));
+    await screen.findByRole('dialog', { name: 'RULES' });
+
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    // PLAY が走っていれば 1 文字の仮配置が検証されてエラーが出る
+    expect(screen.queryByText('1 文字だけでは単語になりません')).toBeNull();
+  });
 });
