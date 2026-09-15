@@ -10,6 +10,7 @@ import { ExchangeModal } from './ui/ExchangeModal';
 import { ModeSelect } from './ui/ModeSelect';
 import { AboutSheet } from './ui/AboutSheet';
 import { RulesSheet } from './ui/RulesSheet';
+import { ContinueButton } from './ui/ContinueButton';
 import { useSelectedTile } from './state/uiState';
 import { seededRng } from './game/bag';
 import { useAiWorker } from './ai/useAiWorker';
@@ -22,7 +23,7 @@ import { DefinitionSheet } from './ui/DefinitionSheet';
 import { MoveWords } from './ui/WordChip';
 
 function GameShell() {
-  const { state, dispatch, dict } = useGame();
+  const { state, dispatch, dict, savedGame } = useGame();
   const dictUrl = dict ? `${import.meta.env.BASE_URL}dict/words.txt` : null;
   const ai = useAiWorker(dictUrl);
   const { selectedIndex, setSelectedIndex } = useSelectedTile();
@@ -148,6 +149,13 @@ function GameShell() {
         <p className="font-pixel text-[10px] text-stone-400 mb-2">
           モードを選択してください
         </p>
+        {savedGame && (
+          <ContinueButton
+            save={savedGame}
+            disabled={!dict}
+            onContinue={() => dispatch({ type: 'RESTORE_GAME', state: savedGame })}
+          />
+        )}
         <ModeSelect
           disabled={!dict}
           onSelect={mode => dispatch({ type: 'START_GAME', mode, rng: seededRng(Date.now()) })}

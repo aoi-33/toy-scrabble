@@ -6,8 +6,23 @@ vi.mock('../../src/ai/useAiWorker', () => ({
 }));
 
 import App from '../../src/App';
+import { reducer, createInitialState } from '../../src/game/reducer';
+import { createDictionaryFromText } from '../../src/game/dictionary';
+import { seededRng } from '../../src/game/bag';
 
 const KEY = 'toy-scrabble:save';
+
+/** 再開できるセーブを localStorage に置く。render() より前に呼ぶこと */
+function seedSave() {
+  const dict = createDictionaryFromText('CAT\nDOG\n');
+  const state = reducer(createInitialState({ seed: 1, dict }), {
+    type: 'START_GAME',
+    mode: 'com-hard',
+    rng: seededRng(1),
+  });
+  localStorage.setItem(KEY, JSON.stringify({ version: 1, state }));
+  return state;
+}
 
 describe('App のセーブ', () => {
   beforeEach(() => {
@@ -55,5 +70,40 @@ describe('App のセーブ', () => {
 
     await screen.findByText('GAME OVER');
     expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('セーブが無ければ CONTINUE を出さない', async () => {
+    render(<App />);
+    await screen.findByLabelText('mode-free');
+    expect(screen.queryByLabelText('continue-game')).toBeNull();
+  });
+
+  it('セーブがあれば CONTINUE を出し、モード名と手数を見せる', async () => {
+    const saved = seedSave();
+    render(<App />);
+
+    const button = await screen.findByLabelText('continue-game');
+    expect(button.textContent).toContain('CONTINUE');
+    expect(button.textContent).toContain('COM HARD');
+    expect(button.textContent).toContain(`${saved.turn} 手目`);
+  });
+
+  it('辞書の読み込み中は CONTINUE を押せない', async () => {
+    seedSave();
+    render(<App />);
+    // fetch の解決前は dict が null。復帰しても盤面を描けないので押させない
+    expect(screen.getByLabelText('continue-game')).toBeDisabled();
+  });
+
+  it('CONTINUE を押すと保存された盤面に戻る', async () => {
+    seedSave();
+    render(<App />);
+
+    const button = await screen.findByLabelText('continue-game');
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+
+    await screen.findByLabelText('cell-7-7');
+    expect(screen.queryByLabelText('mode-free')).toBeNull();
   });
 });
