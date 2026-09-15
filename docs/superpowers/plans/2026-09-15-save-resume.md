@@ -52,7 +52,7 @@
 - Create: `src/state/saveGame.ts`
 - Test: `tests/saveGame.test.ts`
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/saveGame.test.ts` を新規作成します。
 
@@ -139,13 +139,13 @@ describe('saveGame / loadSave', () => {
 });
 ```
 
-- [ ] **Step 2: 失敗することを確認する**
+- [x] **Step 2: 失敗することを確認する**
 
 Run: `npx vitest run tests/saveGame.test.ts`
 
 Expected: FAIL。`src/state/saveGame.ts` が存在しないので解決エラーになります。
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/state/saveGame.ts` を新規作成します。
 
@@ -223,19 +223,19 @@ export function clearSave(): void {
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/saveGame.test.ts`
 
 Expected: PASS (8) FAIL (0)
 
-- [ ] **Step 5: 型と lint を確認する**
+- [x] **Step 5: 型と lint を確認する**
 
 Run: `npx tsc -b && npx eslint .`
 
 Expected: `TypeScript: No errors found` と `ESLint: No issues found`
 
-- [ ] **Step 6: コミットする**
+- [x] **Step 6: コミットする**
 
 ```bash
 git add src/state/saveGame.ts tests/saveGame.test.ts
@@ -250,7 +250,7 @@ git commit -m "feat: ゲームの保存と読み込みを行う saveGame モジ�
 - Modify: `src/game/reducer.ts:29-40`（`Action` 型）と `src/game/reducer.ts:321-322`（`CLEAR_ERROR` の case の隣）
 - Test: `tests/reducer.test.ts`（末尾に describe を 1 つ追加）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/reducer.test.ts` の末尾に次を追加します。ファイル先頭の import（`reducer`, `createInitialState`, `createDictionaryFromText`, `seededRng`）と `const dict` は既にあるので、そのまま使えます。
 
@@ -269,13 +269,13 @@ describe('reducer / RESTORE_GAME', () => {
 });
 ```
 
-- [ ] **Step 2: 失敗することを確認する**
+- [x] **Step 2: 失敗することを確認する**
 
 Run: `npx vitest run tests/reducer.test.ts`
 
 Expected: FAIL。`RESTORE_GAME` は `Action` に無いので `default` 節に落ち、`restored` が `initial`（`status: 'setup'`）のまま返ります。
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/game/reducer.ts` の `Action` 型に 1 行足します。`CLEAR_ERROR` の行の直後です。
 
@@ -297,13 +297,13 @@ Expected: FAIL。`RESTORE_GAME` は `Action` に無いので `default` 節に落
 
 `GameState` は `src/game/reducer.ts:1` で既に import 済みなので、import の変更は要りません。
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/reducer.test.ts`
 
 Expected: FAIL (0)
 
-- [ ] **Step 5: コミットする**
+- [x] **Step 5: コミットする**
 
 ```bash
 git add src/game/reducer.ts tests/reducer.test.ts
@@ -318,7 +318,7 @@ git commit -m "feat: 保存した state を復元する RESTORE_GAME を reducer
 - Modify: `src/state/GameContext.tsx`（全体）
 - Test: `tests/ui/App.save.test.tsx`（新規）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/App.save.test.tsx` を新規作成します。
 
@@ -384,13 +384,13 @@ describe('App のセーブ', () => {
 });
 ```
 
-- [ ] **Step 2: 失敗することを確認する**
+- [x] **Step 2: 失敗することを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: FAIL (2)。まだ誰も `saveGame()` を呼んでいないので `localStorage.getItem(KEY)` が `null` のままです。
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/state/GameContext.tsx` を次の内容に置き換えます。
 
@@ -454,19 +454,19 @@ export function useGame() {
 
 末尾の `react-refresh/only-export-components` の disable は**既存のものをそのまま残しています**。新規に足したものではありません。
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: PASS (2) FAIL (0)
 
-- [ ] **Step 5: 既存テストが壊れていないことを確認する**
+- [x] **Step 5: 既存テストが壊れていないことを確認する**
 
 Run: `npx vitest run && npx tsc -b && npx eslint .`
 
 Expected: FAIL (0)、`TypeScript: No errors found`、`ESLint: No issues found`
 
-- [ ] **Step 6: コミットする**
+- [x] **Step 6: コミットする**
 
 ```bash
 git add src/state/GameContext.tsx tests/ui/App.save.test.tsx
@@ -489,7 +489,7 @@ export すると `react-refresh/only-export-components` に触れるためです
 - Modify: `src/ui/ModeSelect.tsx:1-52`
 - Test: `tests/ui/ModeSelect.test.tsx`（1 件追加）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 現在の `tests/ui/ModeSelect.test.tsx` は `aria-label` しか見ておらず、画面に出る表示名を
 誰も守っていません。リファクタで表示名が消えても気付けないので、先に 1 件足します。
@@ -503,7 +503,7 @@ export すると `react-refresh/only-export-components` に触れるためです
   });
 ```
 
-- [ ] **Step 2: 現時点では通ることを確認する**
+- [x] **Step 2: 現時点では通ることを確認する**
 
 Run: `npx vitest run tests/ui/ModeSelect.test.tsx`
 
@@ -512,7 +512,7 @@ Expected: PASS (7) FAIL (0)
 このテストは新機能ではなく、これから行うリファクタの安全網です。**今は通って正しい。**
 Step 4 のあとも通り続けることが目的です。
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/ui/modeLabels.ts` を新規作成します。
 
@@ -585,13 +585,13 @@ export function ModeSelect({
 }
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/ModeSelect.test.tsx && npx tsc -b && npx eslint .`
 
 Expected: PASS (7) FAIL (0)、`TypeScript: No errors found`、`ESLint: No issues found`
 
-- [ ] **Step 5: コミットする**
+- [x] **Step 5: コミットする**
 
 ```bash
 git add src/ui/modeLabels.ts src/ui/ModeSelect.tsx tests/ui/ModeSelect.test.tsx
@@ -607,7 +607,7 @@ git commit -m "refactor: モード表示名を modeLabels に切り出して共�
 - Modify: `src/App.tsx:25`（`useGame()` の分割代入）、`src/App.tsx:144-180`（setup 画面）
 - Test: `tests/ui/App.save.test.tsx`（追記）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/App.save.test.tsx` の import に次の 3 行を足します（`import App` の下）。
 
@@ -672,14 +672,14 @@ function seedSave() {
   });
 ```
 
-- [ ] **Step 2: 失敗することを確認する**
+- [x] **Step 2: 失敗することを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: FAIL (3)。`continue-game` という `aria-label` を持つ要素がまだ無いためです
 （`セーブが無ければ CONTINUE を出さない` だけは、要素が無いので今も通ります）。
 
-- [ ] **Step 3: ContinueButton を作る**
+- [x] **Step 3: ContinueButton を作る**
 
 `src/ui/ContinueButton.tsx` を新規作成します。
 
@@ -713,7 +713,7 @@ export function ContinueButton({
 }
 ```
 
-- [ ] **Step 4: App に配線する**
+- [x] **Step 4: App に配線する**
 
 `src/App.tsx:12`（`RulesSheet` の import の下）に足します。
 
@@ -752,19 +752,19 @@ setup 画面（`src/App.tsx:144-180`）の `<p>モードを選択してくださ
 未ロードだと `null` を返します（`src/App.tsx:206`）。辞書を待たずに押せると真っ白な画面に
 なります。
 
-- [ ] **Step 5: テストが通ることを確認する**
+- [x] **Step 5: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: PASS (6) FAIL (0)
 
-- [ ] **Step 6: 全体を確認する**
+- [x] **Step 6: 全体を確認する**
 
 Run: `npx vitest run && npx tsc -b && npx eslint .`
 
 Expected: FAIL (0)、`TypeScript: No errors found`、`ESLint: No issues found`
 
-- [ ] **Step 7: コミットする**
+- [x] **Step 7: コミットする**
 
 ```bash
 git add src/ui/ContinueButton.tsx src/App.tsx tests/ui/App.save.test.tsx
@@ -781,7 +781,7 @@ git commit -m "feat: ホーム画面の CONTINUE から途中のゲームを再�
 - Modify: `src/App.tsx`（setup 画面の `ModeSelect` の `onSelect`）
 - Test: `tests/ui/App.save.test.tsx`（追記）
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `tests/ui/App.save.test.tsx` の `describe` 末尾に 2 件足します。
 
@@ -816,14 +816,14 @@ git commit -m "feat: ホーム画面の CONTINUE から途中のゲームを再�
   });
 ```
 
-- [ ] **Step 2: 失敗することを確認する**
+- [x] **Step 2: 失敗することを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: FAIL (1)。`セーブがある状態で…` が落ちます。まだ確認を挟んでいないので
 `confirmSpy` は呼ばれず、そのまま新しいゲームが始まって盤面が出ます。
 
-- [ ] **Step 3: 実装する**
+- [x] **Step 3: 実装する**
 
 `src/App.tsx` の setup 画面の `return` の**手前**にハンドラを定義します
 （`if (state.status === 'setup') {` の直後です）。
@@ -855,19 +855,19 @@ Expected: FAIL (1)。`セーブがある状態で…` が落ちます。まだ�
 import type { GameMode } from './game/types';
 ```
 
-- [ ] **Step 4: テストが通ることを確認する**
+- [x] **Step 4: テストが通ることを確認する**
 
 Run: `npx vitest run tests/ui/App.save.test.tsx`
 
 Expected: PASS (8) FAIL (0)
 
-- [ ] **Step 5: 全体を確認する**
+- [x] **Step 5: 全体を確認する**
 
 Run: `npx vitest run && npx tsc -b && npx eslint .`
 
 Expected: FAIL (0)、`TypeScript: No errors found`、`ESLint: No issues found`
 
-- [ ] **Step 6: コミットする**
+- [x] **Step 6: コミットする**
 
 ```bash
 git add src/App.tsx tests/ui/App.save.test.tsx
@@ -881,7 +881,7 @@ git commit -m "feat: セーブがあるとき新規ゲームの開始前に確�
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: 遊び方に 1 項目足す**
+- [x] **Step 1: 遊び方に 1 項目足す**
 
 `## 遊び方（Plan 1 時点）` の番号付きリストの `1.` の**前**に新しい `1.` を入れ、
 以降の番号を 1 つずつ繰り下げます。つまり先頭を次のようにします。
@@ -893,7 +893,7 @@ git commit -m "feat: セーブがあるとき新規ゲームの開始前に確�
 
 以降の項目（`2.` 以降だったもの）を `3.` から順に振り直してください。最後は `10.` になります。
 
-- [ ] **Step 2: 変更履歴の先頭に追記する**
+- [x] **Step 2: 変更履歴の先頭に追記する**
 
 `## 変更履歴` の直下、既存の一番上の行の**前**に足します。
 
@@ -901,13 +901,13 @@ git commit -m "feat: セーブがあるとき新規ゲームの開始前に確�
 - **2026-09-15** 途中のゲームを保存して続きから遊べるようにした。対局中の状態を localStorage に 1 つだけ保存し、ホーム画面の `CONTINUE` から再開できる。セーブがある状態で新しいモードを選ぶと確認が出る。終局すると保存は消える。
 ```
 
-- [ ] **Step 3: 番号が通っていることを目で確認する**
+- [x] **Step 3: 番号が通っていることを目で確認する**
 
 Run: `grep -n "^[0-9]*\." README.md | head -20`
 
 Expected: `1.` から `10.` まで飛びなく並んでいること。
 
-- [ ] **Step 4: コミットする**
+- [x] **Step 4: コミットする**
 
 ```bash
 git add README.md
@@ -920,13 +920,13 @@ git commit -m "docs: 途中のゲームを再開できるようになったこ�
 
 すべてのタスクが終わったら次を確認します。
 
-- [ ] `npx vitest run` が FAIL (0)。件数は着手前より **18 件**増えている
+- [x] `npx vitest run` が FAIL (0)。件数は着手前より **18 件**増えている
       （saveGame 8 + reducer 1 + ModeSelect 1 + App.save 8）。
       着手前の総数は Task 1 に入る前に `npx vitest run` を 1 回走らせて控えておくこと
-- [ ] `npx tsc -b` が `TypeScript: No errors found`
-- [ ] `npx eslint .` が `ESLint: No issues found`
-- [ ] `git status --short` が空
-- [ ] ブラウザで手動確認する
+- [x] `npx tsc -b` が `TypeScript: No errors found`
+- [x] `npx eslint .` が `ESLint: No issues found`
+- [x] `git status --short` が空
+- [x] ブラウザで手動確認する
   - `npx vite build && npx vite preview` で開く
   - `FREE PLAY` を始めて数手打つ → タブを閉じる → 開き直す → `CONTINUE` が出る
   - `CONTINUE` を押すと盤面・スコア・手札が閉じる前と同じ
@@ -935,3 +935,19 @@ git commit -m "docs: 途中のゲームを再開できるようになったこ�
   - セーブがある状態で `COM EASY` を押すと確認ダイアログが出る
 
 **`git push` はしない。** ユーザーが自分で実行します。
+
+### 実績（2026-09-15）
+
+テストは 278 件 → **302 件**（+24）。見込みの +18 件との差は、レビューで見つかった穴を埋めた
+6 件です。
+
+- saveGame +3 — `players` の中身が壊れたセーブで復帰直後に `.rack` を読んで白画面になる経路
+- reducer +1 — `RESTORE_GAME` が保存時の `lastError` を持ち込まない
+- App.save +2 — COM 手番のセーブから復帰すると着手が再依頼されること、および
+  復帰時に前セッションの COM の手をトーストしないこと
+
+`tests/setup.ts` のグローバル `afterEach` で `localStorage.clear()` を足したのも計画外です。
+`GameProvider` が保存するようになった結果、既存 UI テストのセーブが次のテストへ漏れ、
+jsdom の未実装な `confirm` が `undefined` を返してゲーム開始がキャンセルされていました。
+
+ブラウザ確認は `vite preview` に対する Playwright スクリプトで 10 項目すべて PASS。
