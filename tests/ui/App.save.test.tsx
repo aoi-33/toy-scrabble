@@ -106,4 +106,33 @@ describe('App のセーブ', () => {
     await screen.findByLabelText('cell-7-7');
     expect(screen.queryByLabelText('mode-free')).toBeNull();
   });
+
+  it('セーブがある状態でモードを押すと確認が出て、キャンセルすれば始まらない', async () => {
+    seedSave();
+    const confirmSpy = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirmSpy);
+
+    render(<App />);
+    const free = await screen.findByLabelText('mode-free');
+    await waitFor(() => expect(free).not.toBeDisabled());
+    fireEvent.click(free);
+
+    expect(confirmSpy).toHaveBeenCalled();
+    // キャンセルしたので setup 画面のまま。盤面は出ない
+    expect(screen.queryByLabelText('cell-7-7')).toBeNull();
+    expect(screen.getByLabelText('continue-game')).toBeInTheDocument();
+  });
+
+  it('セーブが無いときは確認を出さずに始まる', async () => {
+    const confirmSpy = vi.fn(() => true);
+    vi.stubGlobal('confirm', confirmSpy);
+
+    render(<App />);
+    const free = await screen.findByLabelText('mode-free');
+    await waitFor(() => expect(free).not.toBeDisabled());
+    fireEvent.click(free);
+
+    await screen.findByLabelText('cell-7-7');
+    expect(confirmSpy).not.toHaveBeenCalled();
+  });
 });

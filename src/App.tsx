@@ -16,6 +16,7 @@ import { seededRng } from './game/bag';
 import { useAiWorker } from './ai/useAiWorker';
 import { boardToSnapshot, rackToSnapshot } from './ai/snapshot';
 import type { Difficulty } from './ai/types';
+import type { GameMode } from './game/types';
 import { useDndSensors } from './ui/dndSensors';
 import { useMediaQuery } from './ui/useMediaQuery';
 import { createDictLoader } from './lookup/dictLoader';
@@ -143,6 +144,12 @@ function GameShell() {
   }, [isDesktop, isHumanTurn, isSheetOpen, canPlay, dict, dispatch]);
 
   if (state.status === 'setup') {
+    // セーブは 1 つしか無い。誤タップで進行中の対局を失わないよう確認を挟む
+    const handleSelectMode = (mode: GameMode) => {
+      if (savedGame && !confirm('途中のゲームが消えます。新しく始めますか？')) return;
+      dispatch({ type: 'START_GAME', mode, rng: seededRng(Date.now()) });
+    };
+
     return (
       <div className="min-h-[100dvh] p-4 md:p-6 pt-[max(1rem,env(safe-area-inset-top))] md:pt-[max(1.5rem,env(safe-area-inset-top))] text-center flex flex-col items-center justify-center gap-4">
         <h1 className="font-pixel text-2xl mb-2">Toy Scrabble</h1>
@@ -156,10 +163,7 @@ function GameShell() {
             onContinue={() => dispatch({ type: 'RESTORE_GAME', state: savedGame })}
           />
         )}
-        <ModeSelect
-          disabled={!dict}
-          onSelect={mode => dispatch({ type: 'START_GAME', mode, rng: seededRng(Date.now()) })}
-        />
+        <ModeSelect disabled={!dict} onSelect={handleSelectMode} />
         {!dict && (
           <p className="font-pixel text-[10px] text-stone-400">
             辞書を読み込んでいます (約 2.7MB)…
