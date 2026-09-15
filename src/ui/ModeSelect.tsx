@@ -1,17 +1,17 @@
 import type { GameMode } from '../game/types';
+import { MODE_LABELS } from './modeLabels';
 
 type ModeOption = {
   mode: GameMode;
-  label: string;
   description: string;
   enabled: boolean;
 };
 
 const OPTIONS: ModeOption[] = [
-  { mode: 'free', label: 'FREE PLAY', description: '2 人で交互にプレイ', enabled: true },
-  { mode: 'com-easy', label: 'COM EASY', description: 'COM 対戦・初級', enabled: true },
-  { mode: 'com-medium', label: 'COM MEDIUM', description: 'COM 対戦・中級', enabled: true },
-  { mode: 'com-hard', label: 'COM HARD', description: 'COM 対戦・上級', enabled: true },
+  { mode: 'free', description: '2 人で交互にプレイ', enabled: true },
+  { mode: 'com-easy', description: 'COM 対戦・初級', enabled: true },
+  { mode: 'com-medium', description: 'COM 対戦・中級', enabled: true },
+  { mode: 'com-hard', description: 'COM 対戦・上級', enabled: true },
 ];
 
 export function ModeSelect({
@@ -39,7 +39,7 @@ export function ModeSelect({
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span>{opt.label}</span>
+              <span>{MODE_LABELS[opt.mode]}</span>
             </div>
             <div className="text-[10px] font-normal mt-1 opacity-80">
               {opt.description}

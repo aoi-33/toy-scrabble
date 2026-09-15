@@ -43,4 +43,10 @@ describe('<ModeSelect>', () => {
     render(<ModeSelect disabled={false} onSelect={() => {}} />);
     expect(screen.getByLabelText('mode-com-easy').className).toContain('min-h-[44px]');
   });
+
+  it('モード名を画面に表示する', () => {
+    render(<ModeSelect disabled={false} onSelect={() => {}} />);
+    expect(screen.getByLabelText('mode-free').textContent).toContain('FREE PLAY');
+    expect(screen.getByLabelText('mode-com-hard').textContent).toContain('COM HARD');
+  });
 });
