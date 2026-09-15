@@ -119,8 +119,7 @@ export function clearSave(): void;
 `CONTINUE` を押す前にセーブが消える。
 
 読み込みは起動時 1 回だけ。`useState(() => loadSave())` で保持し、`GameContextValue` に
-2 つ足して外へ出す。`clearSavedGame` は `CONTINUE` 押下後にボタンを消すために使う
-（localStorage は消さない。復帰した対局はそのまま保存され続ける）。
+1 つ足して外へ出す。
 
 ```ts
 type GameContextValue = {
@@ -128,9 +127,13 @@ type GameContextValue = {
   dispatch: (a: Action) => void;
   dict: Dictionary | null;
   savedGame: GameState | null;   // 追加
-  clearSavedGame: () => void;    // 追加
 };
 ```
+
+**`savedGame` を後から消す手段は用意しない。** `RESTORE_GAME` を dispatch した時点で
+`status` が `playing` になり setup 画面はアンマウントされる。GAME OVER 画面の `NEW GAME` も
+`START_GAME` を直接投げる（`src/App.tsx:195`）ので、setup 画面へ戻る導線は存在しない。
+`setSavedGame(null)` は誰からも呼べない死んだコードになる。
 
 ### `src/ui/modeLabels.ts`（新規）
 
@@ -178,7 +181,7 @@ export function ContinueButton({
 ### `src/App.tsx` setup 画面（変更）
 
 1. `ModeSelect` の上に `{savedGame && <ContinueButton save={savedGame} disabled={!dict} onContinue={...} />}`
-2. `onContinue` は `dispatch({ type: 'RESTORE_GAME', state: savedGame })` してから `savedGame` を `null` にする
+2. `onContinue` は `dispatch({ type: 'RESTORE_GAME', state: savedGame })` だけを行う
 3. `ModeSelect` の `onSelect` を包み、セーブがあるときは確認を挟む
 
 ```ts
