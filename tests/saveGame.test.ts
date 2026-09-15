@@ -77,4 +77,26 @@ describe('saveGame / loadSave', () => {
     clearSave();
     expect(localStorage.getItem(KEY)).toBeNull();
   });
+
+  it('players の中身が壊れているセーブは null を返し、キーも消す', () => {
+    const broken = { ...playingState(), players: [null, null] };
+    localStorage.setItem(KEY, JSON.stringify({ version: 1, state: broken }));
+    expect(loadSave()).toBeNull();
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('読み込みに成功したときはセーブを消さない', () => {
+    saveGame(playingState());
+    expect(loadSave()).not.toBeNull();
+    // 成功パスで clearSave() を呼んでしまうと、次の起動で再開できなくなる
+    expect(localStorage.getItem(KEY)).not.toBeNull();
+  });
+
+  it('getItem が例外を投げても throw せず null を返す', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('SecurityError');
+    });
+    expect(() => loadSave()).not.toThrow();
+    expect(loadSave()).toBeNull();
+  });
 });

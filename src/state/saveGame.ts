@@ -5,6 +5,12 @@ const VERSION = 1;
 
 export type SavedGame = { version: number; state: GameState };
 
+/** 復帰直後に App.tsx が players[i].rack を無条件に読むので、そこだけは形を確かめる */
+function isValidPlayer(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  return Array.isArray((value as { rack?: unknown }).rack);
+}
+
 /**
  * JSON.parse は何でも通すので、読み込んだ値が本当に再開できる盤面かを確かめる。
  * ここを通さないと、リリースをまたいで残った古い形のセーブで画面が真っ白になる。
@@ -18,6 +24,7 @@ function isValidState(value: unknown): value is GameState {
   if (!Array.isArray(s.board) || s.board.length !== 15) return false;
   if (!s.board.every(row => Array.isArray(row) && row.length === 15)) return false;
   if (!Array.isArray(s.players) || s.players.length !== 2) return false;
+  if (!(s.players as unknown[]).every(isValidPlayer)) return false;
   if (s.currentPlayerIndex !== 0 && s.currentPlayerIndex !== 1) return false;
   return Array.isArray(s.bag) && Array.isArray(s.pending) && Array.isArray(s.history);
 }
