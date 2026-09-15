@@ -37,7 +37,8 @@ export type Action =
   | { type: 'PASS' }
   | { type: 'SHUFFLE_RACK'; rng: Rng }
   | { type: 'ASSIGN_BLANK'; r: number; c: number; letter: Letter }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'RESTORE_GAME'; state: GameState };
 
 /** 手札へ戻すタイル。ブランクは指定文字を解除し、再配置時に選び直せるようにする。 */
 function toRackTile(tile: Tile): Tile {
@@ -320,6 +321,8 @@ export function reducer(state: GameState, action: Action): GameState {
     }
     case 'CLEAR_ERROR':
       return { ...state, lastError: null };
+    case 'RESTORE_GAME':
+      return action.state;
     default:
       return state;
   }

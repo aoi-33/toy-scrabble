@@ -294,3 +294,16 @@ describe('reducer / ASSIGN_BLANK', () => {
     expect(s.players[0].rack[0]).toMatchObject({ kind: 'blank', assigned: null });
   });
 });
+
+describe('reducer / RESTORE_GAME', () => {
+  it('渡された state をそのまま返す', () => {
+    const initial = createInitialState({ seed: 1, dict });
+    const saved = reducer(initial, { type: 'START_GAME', mode: 'com-hard', rng: seededRng(7) });
+
+    const restored = reducer(initial, { type: 'RESTORE_GAME', state: saved });
+
+    expect(restored).toEqual(saved);
+    expect(restored.status).toBe('playing');
+    expect(restored.mode).toBe('com-hard');
+  });
+});
