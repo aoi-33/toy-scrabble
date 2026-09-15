@@ -1,25 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
+// ファクトリの中で vi.fn() を作ると呼び出しごとに別物になり、呼ばれたか確かめられない
+const ai = vi.hoisted(() => ({ requestMove: vi.fn() }));
+
 vi.mock('../../src/ai/useAiWorker', () => ({
-  useAiWorker: () => ({ state: 'ready' as const, requestMove: vi.fn() }),
+  useAiWorker: () => ({ state: 'ready' as const, requestMove: ai.requestMove }),
 }));
 
 import App from '../../src/App';
 import { reducer, createInitialState } from '../../src/game/reducer';
 import { createDictionaryFromText } from '../../src/game/dictionary';
 import { seededRng } from '../../src/game/bag';
+import type { GameState } from '../../src/game/types';
 
 const KEY = 'toy-scrabble:save';
 
 /** 再開できるセーブを localStorage に置く。render() より前に呼ぶこと */
-function seedSave() {
+function seedSave(overrides: Partial<GameState> = {}) {
   const dict = createDictionaryFromText('CAT\nDOG\n');
-  const state = reducer(createInitialState({ seed: 1, dict }), {
+  const started = reducer(createInitialState({ seed: 1, dict }), {
     type: 'START_GAME',
     mode: 'com-hard',
     rng: seededRng(1),
   });
+  const state = { ...started, ...overrides };
   localStorage.setItem(KEY, JSON.stringify({ version: 1, state }));
   return state;
 }
@@ -27,6 +32,8 @@ function seedSave() {
 describe('App のセーブ', () => {
   beforeEach(() => {
     localStorage.clear();
+    ai.requestMove.mockReset();
+    ai.requestMove.mockResolvedValue({ kind: 'pass' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ text: async () => 'CAT\nDOG\n' }));
     vi.stubGlobal('confirm', () => true);
     vi.stubGlobal('matchMedia', () => ({
@@ -121,6 +128,35 @@ describe('App のセーブ', () => {
     // キャンセルしたので setup 画面のまま。盤面は出ない
     expect(screen.queryByLabelText('cell-7-7')).toBeNull();
     expect(screen.getByLabelText('continue-game')).toBeInTheDocument();
+  });
+
+  it('再開しても前セッションの COM の手はトーストしない', async () => {
+    seedSave({
+      history: [{ player: 'COM', move: { kind: 'pass' }, wordsFormed: [], score: 0 }],
+    });
+    render(<App />);
+
+    const button = await screen.findByLabelText('continue-game');
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+
+    await screen.findByLabelText('cell-7-7');
+    expect(screen.queryByText('🤖 COM: PASS')).toBeNull();
+  });
+
+  it('COM の手番で保存したゲームを再開すると COM が着手を再依頼される', async () => {
+    // COM の思考中に閉じた状況。復帰後に着手が来ないと対局が止まる
+    seedSave({ currentPlayerIndex: 1 });
+    render(<App />);
+
+    const button = await screen.findByLabelText('continue-game');
+    await waitFor(() => expect(button).not.toBeDisabled());
+    expect(ai.requestMove).not.toHaveBeenCalled();
+    fireEvent.click(button);
+
+    await waitFor(() => expect(ai.requestMove).toHaveBeenCalledTimes(1));
+    // 復帰後に指された手はトーストされる（前セッションの手だけを抑える）
+    await screen.findByText('🤖 COM: PASS', undefined, { timeout: 3000 });
   });
 
   it('セーブが無いときは確認を出さずに始まる', async () => {

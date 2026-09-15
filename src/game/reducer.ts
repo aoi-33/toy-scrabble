@@ -322,7 +322,8 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'CLEAR_ERROR':
       return { ...state, lastError: null };
     case 'RESTORE_GAME':
-      return action.state;
+      // エラー表示中に閉じても、赤いバナーごと復活させない
+      return { ...action.state, lastError: null };
     default:
       return state;
   }

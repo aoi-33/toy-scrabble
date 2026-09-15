@@ -306,4 +306,16 @@ describe('reducer / RESTORE_GAME', () => {
     expect(restored.status).toBe('playing');
     expect(restored.mode).toBe('com-hard');
   });
+
+  it('保存時のエラー表示は復元しない', () => {
+    const initial = createInitialState({ seed: 1, dict });
+    const saved = reducer(initial, { type: 'START_GAME', mode: 'com-hard', rng: seededRng(7) });
+
+    const restored = reducer(initial, {
+      type: 'RESTORE_GAME',
+      state: { ...saved, lastError: 'CAT は辞書にありません' },
+    });
+
+    expect(restored.lastError).toBeNull();
+  });
 });

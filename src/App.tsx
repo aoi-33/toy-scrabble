@@ -92,7 +92,16 @@ function GameShell() {
 
   // COM の直近手をトースト表示（3.5 秒で自動消去）
   const [comToast, setComToast] = useState<string | null>(null);
+  // 対局に入った時点の履歴の長さ。復帰で持ち込んだ前セッションの手をトーストしない。
+  // 一度決めたら進めないので StrictMode の二重実行でも結果が変わらない
+  const historyBaseRef = useRef<number | null>(null);
   useEffect(() => {
+    if (state.status !== 'playing') {
+      historyBaseRef.current = null;
+      return;
+    }
+    if (historyBaseRef.current === null) historyBaseRef.current = state.history.length;
+    if (state.history.length <= historyBaseRef.current) return;
     const last = state.history[state.history.length - 1];
     if (!last || last.player !== 'COM') return;
     let text: string;
@@ -107,7 +116,7 @@ function GameShell() {
     const t = setTimeout(() => setComToast(null), 3500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.history.length]);
+  }, [state.status, state.history.length]);
 
   // Enter = PLAY / Escape = RECALL ALL（PC のみ、design.md §5.6）
   const canPlay = state.status === 'playing' && state.pending.length > 0;
